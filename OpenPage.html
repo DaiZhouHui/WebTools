@@ -1,0 +1,3491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全能搜索起始页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.css">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; 
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 顶部控制栏 */
+        .top-bar {
+            background: #f8fafc;
+            padding: 12px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        
+        .category-tab {
+            padding: 8px 16px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .category-tab:hover {
+            background: #cbd5e1;
+        }
+        
+        .category-tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+        }
+        
+        .settings-icon {
+            background: rgba(79, 70, 229, 0.1);
+            border: 2px solid rgba(79, 70, 229, 0.2);
+            color: #4f46e5;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .settings-icon:hover {
+            background: #4f46e5;
+            color: white;
+            transform: rotate(30deg);
+        }
+        
+        /* 搜索网格样式 */
+        .main-content {
+            padding: 25px;
+        }
+        
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            cursor: move;
+            position: relative;
+        }
+        
+        .search-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+            border-color: #c7d2fe;
+        }
+        
+        .search-card.sortable-ghost {
+            opacity: 0.4;
+            background: #f1f5f9;
+        }
+        
+        .search-card.sortable-chosen {
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+        }
+        
+        .card-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 2;
+        }
+        
+        .card-control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card-control-btn:hover {
+            background: white;
+            border-color: #cbd5e1;
+            color: #4f46e5;
+            transform: scale(1.1);
+        }
+        
+        .card-control-btn.sort-handle:hover {
+            cursor: move;
+        }
+        
+        .card-control-btn.hide-btn:hover {
+            color: #ef4444;
+        }
+        
+        .search-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .icon-container {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .icon-container:hover {
+            transform: scale(1.1);
+        }
+        
+        .search-info {
+            flex: 1;
+        }
+        
+        .search-info h3 {
+            color: #1e293b;
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .search-info h3:hover {
+            color: #4f46e5;
+        }
+        
+        .search-info p {
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .input-group button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .input-group button:hover {
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
+            transform: scale(1.03);
+        }
+        
+        /* 自定义提示框样式 */
+        .custom-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-alert.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .alert-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .custom-alert.active .alert-content {
+            transform: translateY(0);
+        }
+        
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .alert-icon.success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+        
+        .alert-icon.warning {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+        
+        .alert-icon.error {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+        }
+        
+        .alert-header h3 {
+            color: #1e293b;
+            font-size: 1.5rem;
+        }
+        
+        .alert-message {
+            color: #64748b;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .alert-btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .alert-btn.cancel {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+        
+        .alert-btn.cancel:hover {
+            background: #cbd5e1;
+        }
+        
+        .alert-btn.confirm {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+        
+        .alert-btn.confirm:hover {
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
+            transform: scale(1.05);
+        }
+        
+        /* 设置面板样式 */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 500px;
+            height: 100vh;
+            background: white;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            overflow-y: auto;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+        
+        .settings-panel.active {
+            right: 0;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .settings-header h2 {
+            color: #1e293b;
+            font-size: 1.8rem;
+        }
+        
+        .close-settings {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #64748b;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .close-settings:hover {
+            color: #4f46e5;
+            background: #f1f5f9;
+        }
+        
+        .settings-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .settings-section {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 20px;
+        }
+        
+        .settings-section h3 {
+            color: #1e293b;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .settings-section h3 i {
+            color: #4f46e5;
+        }
+        
+        /* 功能开关样式 */
+        .feature-switches {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .switch-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .switch-info h4 {
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+        
+        .switch-info p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #4f46e5;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* 导入导出按钮样式 */
+        .import-export-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .import-export-btn {
+            flex: 1;
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .import-export-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        
+        .import-export-btn.export {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .import-export-btn.export:hover {
+            background: linear-gradient(135deg, #0da271, #2bb184);
+        }
+        
+        /* 添加自定义网站表单 */
+        .add-site-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px dashed #cbd5e1;
+            margin-bottom: 20px;
+        }
+        
+        .add-site-form h4 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .custom-category-input {
+            display: none;
+            margin-top: 10px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-help {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .category-filter {
+            padding: 8px 16px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        
+        .category-filter:hover {
+            background: #cbd5e1;
+        }
+        
+        .category-filter.active {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+        }
+        
+        .site-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .site-checkbox:hover {
+            border-color: #4f46e5;
+            transform: translateX(3px);
+        }
+        
+        .site-checkbox input {
+            width: 16px;
+            height: 16px;
+            accent-color: #4f46e5;
+        }
+        
+        .site-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .small-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .settings-actions {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            background: #e2e8f0;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .action-btn:hover {
+            background: #cbd5e1;
+        }
+        
+        .action-btn.primary {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: white;
+        }
+        
+        .action-btn.primary:hover {
+            background: #4338ca;
+            border-color: #4338ca;
+        }
+        
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #64748b;
+            grid-column: 1 / -1;
+        }
+        
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            color: #475569;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .search-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .top-bar {
+                padding: 10px 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .category-tabs {
+                width: 100%;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 5px;
+            }
+            
+            .settings-icon {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .search-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .search-card {
+                padding: 15px;
+            }
+            
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+                padding: 20px;
+            }
+            
+            .sites-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings-actions {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .settings-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group button {
+                width: 100%;
+            }
+            
+            .category-tab {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .card-control-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+            
+            .alert-content {
+                padding: 20px;
+            }
+            
+            .alert-actions {
+                flex-direction: column;
+            }
+            
+            .alert-btn {
+                width: 100%;
+            }
+        }
+        
+        /* 排序提示 */
+        .sorting-hint {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            padding: 10px;
+            margin-top: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+        }
+        
+        .sorting-hint i {
+            color: #4f46e5;
+            margin-right: 5px;
+        }
+        
+        .sorting-hint.disabled {
+            display: none;
+        }
+        
+        /* 隐藏的文件输入框 */
+        .file-input-hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 自定义提示框 -->
+    <div class="custom-alert" id="customAlert">
+        <div class="alert-content">
+            <div class="alert-header">
+                <div class="alert-icon" id="alertIcon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h3 id="alertTitle">提示</h3>
+            </div>
+            <div class="alert-message" id="alertMessage"></div>
+            <div class="alert-actions">
+                <button class="alert-btn cancel" id="alertCancel">取消</button>
+                <button class="alert-btn confirm" id="alertConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2><i class="fas fa-sliders-h"></i> 自定义设置</h2>
+            <button class="close-settings" id="closeSettings">×</button>
+        </div>
+        
+        <div class="settings-content">
+            <!-- 1. 功能开关 -->
+            <div class="settings-section">
+                <h3><i class="fas fa-toggle-on"></i> 功能开关</h3>
+                <div class="feature-switches">
+                    <div class="feature-switch">
+                        <div class="switch-info">
+                            <h4>启用排序功能</h4>
+                            <p>启用后可以拖拽卡片重新排序</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="enableSort">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="feature-switch">
+                        <div class="switch-info">
+                            <h4>启用隐藏功能</h4>
+                            <p>启用后可以隐藏不需要的网站</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="enableHide">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 导入导出按钮 -->
+                <div class="import-export-buttons">
+                    <button class="import-export-btn" id="importSettings">
+                        <i class="fas fa-upload"></i> 导入配置
+                    </button>
+                    <button class="import-export-btn export" id="exportSettings">
+                        <i class="fas fa-download"></i> 导出配置
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 2. 分类筛选 -->
+            <div class="settings-section">
+                <h3><i class="fas fa-filter"></i> 分类筛选</h3>
+                <div class="category-filters" id="categoryFilters">
+                    <!-- 分类标签将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 3. 选择要显示的网站 -->
+            <div class="settings-section">
+                <h3><i class="fas fa-check-circle"></i> 选择要显示的网站</h3>
+                <p class="form-help">提示：在主界面可以拖拽卡片进行排序（需要先启用排序功能）</p>
+                
+                <div class="sites-grid" id="sitesGrid">
+                    <!-- 网站复选框将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="settings-actions">
+                <button class="action-btn" id="selectAll">
+                    <i class="fas fa-check-double"></i> 全选
+                </button>
+                <button class="action-btn" id="deselectAll">
+                    <i class="fas fa-times-circle"></i> 全不选
+                </button>
+                <button class="action-btn" id="resetOrder">
+                    <i class="fas fa-sort-amount-down"></i> 重置排序
+                </button>
+                <button class="action-btn primary" id="saveSettings">
+                    <i class="fas fa-save"></i> 保存设置
+                </button>
+            </div>
+            
+            <!-- 4. 自定义网站管理 -->
+            <div class="settings-section" id="customSitesSection" style="display: none;">
+                <h3><i class="fas fa-user-cog"></i> 自定义网站管理</h3>
+                <div class="sites-grid" id="customSitesGrid">
+                    <!-- 自定义网站将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 5. 添加自定义网站功能 -->
+            <div class="settings-section">
+                <h3><i class="fas fa-plus-circle"></i> 添加自定义网站</h3>
+                <div class="add-site-form">
+                    <div class="form-group">
+                        <label for="customSiteName"><i class="fas fa-signature"></i> 网站名称</label>
+                        <input type="text" id="customSiteName" placeholder="例如：我的博客">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customSiteUrl"><i class="fas fa-link"></i> 搜索URL格式</label>
+                        <input type="text" id="customSiteUrl" placeholder="https://example.com/search?q={keyword}">
+                        <div class="form-help">请使用 {keyword} 作为关键词占位符</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customSiteHomepage"><i class="fas fa-home"></i> 官方网站</label>
+                        <input type="text" id="customSiteHomepage" placeholder="https://example.com">
+                        <div class="form-help">点击图标或名称时将打开此链接</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customSiteIcon"><i class="fas fa-icons"></i> 图标</label>
+                            <select id="customSiteIcon">
+                                <option value="fas fa-search">🔍 搜索</option>
+                                <option value="fab fa-chrome">🌐 浏览器</option>
+                                <option value="fas fa-shopping-cart">🛒 购物</option>
+                                <option value="fas fa-video">🎬 视频</option>
+                                <option value="fas fa-music">🎵 音乐</option>
+                                <option value="fas fa-book">📚 书籍</option>
+                                <option value="fas fa-code">💻 编程</option>
+                                <option value="fas fa-gamepad">🎮 游戏</option>
+                                <option value="fas fa-newspaper">📰 新闻</option>
+                                <option value="fas fa-graduation-cap">🎓 学习</option>
+                                <option value="fas fa-paint-brush">🎨 设计</option>
+                                <option value="fas fa-utensils">🍴 美食</option>
+                                <option value="fas fa-heart">❤️ 健康</option>
+                                <option value="fas fa-plane">✈️ 旅行</option>
+                                <option value="fas fa-camera">📷 摄影</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customSiteColor"><i class="fas fa-palette"></i> 主题色</label>
+                            <input type="color" id="customSiteColor" value="#4f46e5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customSiteCategory"><i class="fas fa-folder"></i> 分类</label>
+                        <select id="customSiteCategory">
+                            <option value="custom">自定义分类</option>
+                            <option value="video">视频</option>
+                            <option value="programming">编程</option>
+                            <option value="knowledge">知识</option>
+                            <option value="search">搜索</option>
+                            <option value="shopping">购物</option>
+                            <option value="social">社交</option>
+                            <option value="music">音乐</option>
+                            <option value="learning">学习</option>
+                            <option value="tools">工具</option>
+                            <option value="news">新闻</option>
+                            <option value="reading">阅读</option>
+                            <option value="finance">金融</option>
+                            <option value="health">健康</option>
+                            <option value="travel">旅行</option>
+                            <option value="food">美食</option>
+                            <option value="sports">体育</option>
+                            <option value="entertainment">娱乐</option>
+                        </select>
+                        <input type="text" id="customCategoryInput" class="custom-category-input" placeholder="请输入自定义分类名称">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customSiteDesc"><i class="fas fa-comment-alt"></i> 描述</label>
+                        <input type="text" id="customSiteDesc" placeholder="描述这个网站的搜索内容...">
+                    </div>
+                    
+                    <button class="action-btn primary" id="addCustomSite" style="width: 100%;">
+                        <i class="fas fa-plus"></i> 添加自定义网站
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 顶部控制栏 -->
+        <div class="top-bar">
+            <!-- 分类标签 -->
+            <div class="category-tabs" id="categoryTabs">
+                <!-- 分类标签将通过JS动态生成 -->
+            </div>
+            
+            <!-- 设置按钮 -->
+            <button class="settings-icon" id="openSettings" title="设置">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <div class="search-grid" id="searchGrid">
+                <!-- 搜索卡片将通过JS动态生成 -->
+            </div>
+            
+            <!-- 排序提示 -->
+            <div class="sorting-hint disabled" id="sortingHint">
+                <i class="fas fa-hand-point-up"></i> 拖拽卡片可以自定义排序顺序
+            </div>
+            
+            <!-- 空状态提示 -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-search-slash"></i>
+                <h3>没有可显示的网站</h3>
+                <p>请打开设置面板，选择你想要显示的网站</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件输入框用于导入配置 -->
+    <input type="file" id="importFile" accept=".json" class="file-input-hidden">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <script>
+        // 完整的搜索引擎数据库（120+个热门网站）
+        const searchEnginesDB = {
+            // 视频类
+            video: [
+                {
+                    id: 'bilibili',
+                    name: '哔哩哔哩',
+                    url: 'https://search.bilibili.com/all?keyword={keyword}',
+                    homepage: 'https://www.bilibili.com',
+                    icon: 'fab fa-bilibili',
+                    color: '#FB7299',
+                    description: '搜索番剧、知识、UP主...',
+                    custom: false
+                },
+                {
+                    id: 'youtube',
+                    name: 'YouTube',
+                    url: 'https://www.youtube.com/results?search_query={keyword}',
+                    homepage: 'https://www.youtube.com',
+                    icon: 'fab fa-youtube',
+                    color: '#FF0000',
+                    description: '搜索视频、音乐、教程...',
+                    custom: false
+                },
+                {
+                    id: 'iqiyi',
+                    name: '爱奇艺',
+                    url: 'https://so.iqiyi.com/so/q_{keyword}',
+                    homepage: 'https://www.iqiyi.com',
+                    icon: 'fas fa-play-circle',
+                    color: '#00BE06',
+                    description: '搜索电视剧、电影、综艺...',
+                    custom: false
+                },
+                {
+                    id: 'tencentVideo',
+                    name: '腾讯视频',
+                    url: 'https://v.qq.com/x/search?q={keyword}',
+                    homepage: 'https://v.qq.com',
+                    icon: 'fab fa-tencent',
+                    color: '#0DB3FF',
+                    description: '搜索热播剧、电影、动漫...',
+                    custom: false
+                },
+                {
+                    id: 'youku',
+                    name: '优酷',
+                    url: 'https://so.youku.com/search_video/q_{keyword}',
+                    homepage: 'https://www.youku.com',
+                    icon: 'fas fa-film',
+                    color: '#FF6600',
+                    description: '搜索高清视频、剧集...',
+                    custom: false
+                },
+                {
+                    id: 'douyin',
+                    name: '抖音',
+                    url: 'https://www.douyin.com/search/{keyword}',
+                    homepage: 'https://www.douyin.com',
+                    icon: 'fab fa-tiktok',
+                    color: '#000000',
+                    description: '搜索短视频、直播...',
+                    custom: false
+                },
+                {
+                    id: 'twitch',
+                    name: 'Twitch',
+                    url: 'https://www.twitch.tv/search?term={keyword}',
+                    homepage: 'https://www.twitch.tv',
+                    icon: 'fab fa-twitch',
+                    color: '#9146FF',
+                    description: '搜索游戏直播...',
+                    custom: false
+                },
+                {
+                    id: 'vimeo',
+                    name: 'Vimeo',
+                    url: 'https://vimeo.com/search?q={keyword}',
+                    homepage: 'https://vimeo.com',
+                    icon: 'fab fa-vimeo',
+                    color: '#1AB7EA',
+                    description: '搜索高清视频...',
+                    custom: false
+                },
+                {
+                    id: 'netflix',
+                    name: 'Netflix',
+                    url: 'https://www.netflix.com/search?q={keyword}',
+                    homepage: 'https://www.netflix.com',
+                    icon: 'fas fa-tv',
+                    color: '#E50914',
+                    description: '搜索电影、剧集...',
+                    custom: false
+                }
+            ],
+            
+            // 编程开发类
+            programming: [
+                {
+                    id: 'github',
+                    name: 'GitHub',
+                    url: 'https://github.com/search?q={keyword}',
+                    homepage: 'https://github.com',
+                    icon: 'fab fa-github',
+                    color: '#181717',
+                    description: '搜索仓库、代码、用户...',
+                    custom: false
+                },
+                {
+                    id: 'stackoverflow',
+                    name: 'Stack Overflow',
+                    url: 'https://stackoverflow.com/search?q={keyword}',
+                    homepage: 'https://stackoverflow.com',
+                    icon: 'fab fa-stack-overflow',
+                    color: '#F48024',
+                    description: '搜索编程问题、解决方案...',
+                    custom: false
+                },
+                {
+                    id: 'gitlab',
+                    name: 'GitLab',
+                    url: 'https://gitlab.com/search?search={keyword}',
+                    homepage: 'https://gitlab.com',
+                    icon: 'fab fa-gitlab',
+                    color: '#FC6D26',
+                    description: '搜索GitLab项目、代码...',
+                    custom: false
+                },
+                {
+                    id: 'npm',
+                    name: 'npm',
+                    url: 'https://www.npmjs.com/search?q={keyword}',
+                    homepage: 'https://www.npmjs.com',
+                    icon: 'fab fa-npm',
+                    color: '#CB3837',
+                    description: '搜索JavaScript包...',
+                    custom: false
+                },
+                {
+                    id: 'python',
+                    name: 'Python官方',
+                    url: 'https://docs.python.org/3/search.html?q={keyword}',
+                    homepage: 'https://www.python.org',
+                    icon: 'fab fa-python',
+                    color: '#3776AB',
+                    description: '搜索Python文档...',
+                    custom: false
+                },
+                {
+                    id: 'mdn',
+                    name: 'MDN Web Docs',
+                    url: 'https://developer.mozilla.org/zh-CN/search?q={keyword}',
+                    homepage: 'https://developer.mozilla.org',
+                    icon: 'fab fa-mdn',
+                    color: '#000000',
+                    description: '搜索Web开发文档...',
+                    custom: false
+                },
+                {
+                    id: 'dockerhub',
+                    name: 'Docker Hub',
+                    url: 'https://hub.docker.com/search?q={keyword}',
+                    homepage: 'https://hub.docker.com',
+                    icon: 'fab fa-docker',
+                    color: '#2496ED',
+                    description: '搜索Docker镜像...',
+                    custom: false
+                },
+                {
+                    id: 'leetcode',
+                    name: 'LeetCode',
+                    url: 'https://leetcode.com/problemset/all/?search={keyword}',
+                    homepage: 'https://leetcode.com',
+                    icon: 'fas fa-code',
+                    color: '#FFA116',
+                    description: '搜索算法题目...',
+                    custom: false
+                },
+                {
+                    id: 'codepen',
+                    name: 'CodePen',
+                    url: 'https://codepen.io/search/pens?q={keyword}',
+                    homepage: 'https://codepen.io',
+                    icon: 'fab fa-codepen',
+                    color: '#000000',
+                    description: '搜索前端代码示例...',
+                    custom: false
+                },
+                {
+                    id: 'jsfiddle',
+                    name: 'JSFiddle',
+                    url: 'https://jsfiddle.net/search/?query={keyword}',
+                    homepage: 'https://jsfiddle.net',
+                    icon: 'fas fa-code',
+                    color: '#0084FF',
+                    description: '搜索JavaScript代码片段...',
+                    custom: false
+                },
+                {
+                    id: 'stackblitz',
+                    name: 'StackBlitz',
+                    url: 'https://stackblitz.com/search?q={keyword}',
+                    homepage: 'https://stackblitz.com',
+                    icon: 'fas fa-bolt',
+                    color: '#1263F1',
+                    description: '搜索在线开发环境...',
+                    custom: false
+                },
+                {
+                    id: 'replit',
+                    name: 'Replit',
+                    url: 'https://replit.com/search?q={keyword}',
+                    homepage: 'https://replit.com',
+                    icon: 'fas fa-terminal',
+                    color: '#667881',
+                    description: '搜索在线编程项目...',
+                    custom: false
+                }
+            ],
+            
+            // 知识社区类
+            knowledge: [
+                {
+                    id: 'zhihu',
+                    name: '知乎',
+                    url: 'https://www.zhihu.com/search?type=content&q={keyword}',
+                    homepage: 'https://www.zhihu.com',
+                    icon: 'fab fa-zhihu',
+                    color: '#0066FF',
+                    description: '搜索问题、话题、用户...',
+                    custom: false
+                },
+                {
+                    id: 'baiduBaike',
+                    name: '百度百科',
+                    url: 'https://baike.baidu.com/item/{keyword}',
+                    homepage: 'https://baike.baidu.com',
+                    icon: 'fas fa-book',
+                    color: '#2319DC',
+                    description: '搜索百科词条、知识...',
+                    custom: false
+                },
+                {
+                    id: 'wikipedia',
+                    name: '维基百科',
+                    url: 'https://zh.wikipedia.org/wiki/Special:搜索?search={keyword}',
+                    homepage: 'https://zh.wikipedia.org',
+                    icon: 'fab fa-wikipedia-w',
+                    color: '#000000',
+                    description: '搜索全球知识百科...',
+                    custom: false
+                },
+                {
+                    id: 'douban',
+                    name: '豆瓣',
+                    url: 'https://www.douban.com/search?q={keyword}',
+                    homepage: 'https://www.douban.com',
+                    icon: 'fas fa-star',
+                    color: '#007722',
+                    description: '搜索书籍、电影、音乐...',
+                    custom: false
+                },
+                {
+                    id: 'juejin',
+                    name: '掘金',
+                    url: 'https://juejin.cn/search?query={keyword}',
+                    homepage: 'https://juejin.cn',
+                    icon: 'fas fa-gem',
+                    color: '#007FFF',
+                    description: '搜索技术文章、分享...',
+                    custom: false
+                },
+                {
+                    id: 'csdn',
+                    name: 'CSDN',
+                    url: 'https://so.csdn.net/so/search?q={keyword}',
+                    homepage: 'https://www.csdn.net',
+                    icon: 'fas fa-laptop-code',
+                    color: '#D42B32',
+                    description: '搜索技术博客、教程...',
+                    custom: false
+                },
+                {
+                    id: 'segmentfault',
+                    name: '思否',
+                    url: 'https://segmentfault.com/search?q={keyword}',
+                    homepage: 'https://segmentfault.com',
+                    icon: 'fas fa-question-circle',
+                    color: '#26B766',
+                    description: '搜索技术问答...',
+                    custom: false
+                },
+                {
+                    id: 'infoq',
+                    name: 'InfoQ',
+                    url: 'https://www.infoq.cn/search?q={keyword}',
+                    homepage: 'https://www.infoq.cn',
+                    icon: 'fas fa-newspaper',
+                    color: '#00A8FF',
+                    description: '搜索技术资讯...',
+                    custom: false
+                },
+                {
+                    id: 'oschina',
+                    name: '开源中国',
+                    url: 'https://www.oschina.net/search?q={keyword}',
+                    homepage: 'https://www.oschina.net',
+                    icon: 'fas fa-code-branch',
+                    color: '#21B351',
+                    description: '搜索开源项目...',
+                    custom: false
+                },
+                {
+                    id: 'v2ex',
+                    name: 'V2EX',
+                    url: 'https://www.v2ex.com/?q={keyword}',
+                    homepage: 'https://www.v2ex.com',
+                    icon: 'fas fa-comments',
+                    color: '#CCCCCC',
+                    description: '搜索技术社区讨论...',
+                    custom: false
+                },
+                {
+                    id: 'quora',
+                    name: 'Quora',
+                    url: 'https://www.quora.com/search?q={keyword}',
+                    homepage: 'https://www.quora.com',
+                    icon: 'fab fa-quora',
+                    color: '#B92B27',
+                    description: '搜索英文问答...',
+                    custom: false
+                }
+            ],
+            
+            // 搜索引擎类
+            search: [
+                {
+                    id: 'baidu',
+                    name: '百度',
+                    url: 'https://www.baidu.com/s?wd={keyword}',
+                    homepage: 'https://www.baidu.com',
+                    icon: 'fas fa-search',
+                    color: '#2319DC',
+                    description: '搜索任何内容...',
+                    custom: false
+                },
+                {
+                    id: 'google',
+                    name: 'Google',
+                    url: 'https://www.google.com/search?q={keyword}',
+                    homepage: 'https://www.google.com',
+                    icon: 'fab fa-google',
+                    color: '#4285F4',
+                    description: '搜索全球信息...',
+                    custom: false
+                },
+                {
+                    id: 'bing',
+                    name: 'Bing',
+                    url: 'https://www.bing.com/search?q={keyword}',
+                    homepage: 'https://www.bing.com',
+                    icon: 'fab fa-microsoft',
+                    color: '#007DAA',
+                    description: '微软搜索引擎...',
+                    custom: false
+                },
+                {
+                    id: 'sogou',
+                    name: '搜狗',
+                    url: 'https://www.sogou.com/web?query={keyword}',
+                    homepage: 'https://www.sogou.com',
+                    icon: 'fas fa-paw',
+                    color: '#FB6027',
+                    description: '搜狗搜索...',
+                    custom: false
+                },
+                {
+                    id: 'duckduckgo',
+                    name: 'DuckDuckGo',
+                    url: 'https://duckduckgo.com/?q={keyword}',
+                    homepage: 'https://duckduckgo.com',
+                    icon: 'fas fa-duck',
+                    color: '#DE5833',
+                    description: '隐私搜索引擎...',
+                    custom: false
+                },
+                {
+                    id: 'yandex',
+                    name: 'Yandex',
+                    url: 'https://yandex.com/search/?text={keyword}',
+                    homepage: 'https://yandex.com',
+                    icon: 'fas fa-search',
+                    color: '#FF0000',
+                    description: '俄罗斯搜索引擎...',
+                    custom: false
+                },
+                {
+                    id: 'yahoo',
+                    name: 'Yahoo',
+                    url: 'https://search.yahoo.com/search?p={keyword}',
+                    homepage: 'https://search.yahoo.com',
+                    icon: 'fab fa-yahoo',
+                    color: '#6001D2',
+                    description: '雅虎搜索...',
+                    custom: false
+                }
+            ],
+            
+            // 购物类
+            shopping: [
+                {
+                    id: 'taobao',
+                    name: '淘宝',
+                    url: 'https://s.taobao.com/search?q={keyword}',
+                    homepage: 'https://www.taobao.com',
+                    icon: 'fas fa-shopping-cart',
+                    color: '#FF4400',
+                    description: '搜索商品、店铺...',
+                    custom: false
+                },
+                {
+                    id: 'jd',
+                    name: '京东',
+                    url: 'https://search.jd.com/Search?keyword={keyword}',
+                    homepage: 'https://www.jd.com',
+                    icon: 'fas fa-store',
+                    color: '#E3330F',
+                    description: '搜索数码、家电...',
+                    custom: false
+                },
+                {
+                    id: 'pinduoduo',
+                    name: '拼多多',
+                    url: 'https://mobile.yangkeduo.com/search_result.html?search_key={keyword}',
+                    homepage: 'https://www.pinduoduo.com',
+                    icon: 'fas fa-shopping-basket',
+                    color: '#E42C2E',
+                    description: '搜索拼团商品...',
+                    custom: false
+                },
+                {
+                    id: 'amazon',
+                    name: '亚马逊',
+                    url: 'https://www.amazon.com/s?k={keyword}',
+                    homepage: 'https://www.amazon.com',
+                    icon: 'fab fa-amazon',
+                    color: '#FF9900',
+                    description: '搜索全球商品...',
+                    custom: false
+                },
+                {
+                    id: 'tmall',
+                    name: '天猫',
+                    url: 'https://list.tmall.com/search_product.htm?q={keyword}',
+                    homepage: 'https://www.tmall.com',
+                    icon: 'fas fa-crown',
+                    color: '#FF0033',
+                    description: '搜索品牌商品...',
+                    custom: false
+                },
+                {
+                    id: '1688',
+                    name: '1688',
+                    url: 'https://s.1688.com/selloffer/offer_search.htm?keywords={keyword}',
+                    homepage: 'https://www.1688.com',
+                    icon: 'fas fa-industry',
+                    color: '#FF6A00',
+                    description: '搜索批发商品...',
+                    custom: false
+                },
+                {
+                    id: 'aliexpress',
+                    name: 'AliExpress',
+                    url: 'https://www.aliexpress.com/wholesale?SearchText={keyword}',
+                    homepage: 'https://www.aliexpress.com',
+                    icon: 'fas fa-globe',
+                    color: '#FF6A00',
+                    description: '搜索全球速卖通...',
+                    custom: false
+                },
+                {
+                    id: 'ebay',
+                    name: 'eBay',
+                    url: 'https://www.ebay.com/sch/i.html?_nkw={keyword}',
+                    homepage: 'https://www.ebay.com',
+                    icon: 'fab fa-ebay',
+                    color: '#E53238',
+                    description: '搜索拍卖商品...',
+                    custom: false
+                },
+                {
+                    id: 'walmart',
+                    name: 'Walmart',
+                    url: 'https://www.walmart.com/search?q={keyword}',
+                    homepage: 'https://www.walmart.com',
+                    icon: 'fas fa-store',
+                    color: '#0071CE',
+                    description: '搜索沃尔玛商品...',
+                    custom: false
+                },
+                {
+                    id: 'bestbuy',
+                    name: 'Best Buy',
+                    url: 'https://www.bestbuy.com/site/searchpage.jsp?st={keyword}',
+                    homepage: 'https://www.bestbuy.com',
+                    icon: 'fas fa-laptop',
+                    color: '#0046BE',
+                    description: '搜索电子产品...',
+                    custom: false
+                }
+            ],
+            
+            // 社交媒体类
+            social: [
+                {
+                    id: 'weibo',
+                    name: '微博',
+                    url: 'https://s.weibo.com/weibo?q={keyword}',
+                    homepage: 'https://weibo.com',
+                    icon: 'fab fa-weibo',
+                    color: '#DF2029',
+                    description: '搜索热点、话题...',
+                    custom: false
+                },
+                {
+                    id: 'xiaohongshu',
+                    name: '小红书',
+                    url: 'https://www.xiaohongshu.com/search_result?keyword={keyword}',
+                    homepage: 'https://www.xiaohongshu.com',
+                    icon: 'fas fa-book-open',
+                    color: '#FF2442',
+                    description: '搜索笔记、攻略...',
+                    custom: false
+                },
+                {
+                    id: 'twitter',
+                    name: 'Twitter',
+                    url: 'https://twitter.com/search?q={keyword}',
+                    homepage: 'https://twitter.com',
+                    icon: 'fab fa-twitter',
+                    color: '#1DA1F2',
+                    description: '搜索推文、话题...',
+                    custom: false
+                },
+                {
+                    id: 'facebook',
+                    name: 'Facebook',
+                    url: 'https://www.facebook.com/search/top?q={keyword}',
+                    homepage: 'https://www.facebook.com',
+                    icon: 'fab fa-facebook',
+                    color: '#1877F2',
+                    description: '搜索社交内容...',
+                    custom: false
+                },
+                {
+                    id: 'instagram',
+                    name: 'Instagram',
+                    url: 'https://www.instagram.com/explore/tags/{keyword}/',
+                    homepage: 'https://www.instagram.com',
+                    icon: 'fab fa-instagram',
+                    color: '#E4405F',
+                    description: '搜索图片、标签...',
+                    custom: false
+                },
+                {
+                    id: 'linkedin',
+                    name: 'LinkedIn',
+                    url: 'https://www.linkedin.com/search/results/all/?keywords={keyword}',
+                    homepage: 'https://www.linkedin.com',
+                    icon: 'fab fa-linkedin',
+                    color: '#0A66C2',
+                    description: '搜索职场信息...',
+                    custom: false
+                },
+                {
+                    id: 'reddit',
+                    name: 'Reddit',
+                    url: 'https://www.reddit.com/search/?q={keyword}',
+                    homepage: 'https://www.reddit.com',
+                    icon: 'fab fa-reddit',
+                    color: '#FF4500',
+                    description: '搜索社区讨论...',
+                    custom: false
+                },
+                {
+                    id: 'pinterest',
+                    name: 'Pinterest',
+                    url: 'https://www.pinterest.com/search/pins/?q={keyword}',
+                    homepage: 'https://www.pinterest.com',
+                    icon: 'fab fa-pinterest',
+                    color: '#E60023',
+                    description: '搜索图片灵感...',
+                    custom: false
+                },
+                {
+                    id: 'tumblr',
+                    name: 'Tumblr',
+                    url: 'https://www.tumblr.com/search/{keyword}',
+                    homepage: 'https://www.tumblr.com',
+                    icon: 'fab fa-tumblr',
+                    color: '#001935',
+                    description: '搜索博客内容...',
+                    custom: false
+                }
+            ],
+            
+            // 音乐类
+            music: [
+                {
+                    id: 'neteaseMusic',
+                    name: '网易云音乐',
+                    url: 'https://music.163.com/#/search/m/?s={keyword}',
+                    homepage: 'https://music.163.com',
+                    icon: 'fas fa-music',
+                    color: '#E60026',
+                    description: '搜索歌曲、歌单...',
+                    custom: false
+                },
+                {
+                    id: 'qqMusic',
+                    name: 'QQ音乐',
+                    url: 'https://y.qq.com/n/ryqq/search?w={keyword}',
+                    homepage: 'https://y.qq.com',
+                    icon: 'fab fa-qq',
+                    color: '#31C27C',
+                    description: '搜索音乐、MV...',
+                    custom: false
+                },
+                {
+                    id: 'kugou',
+                    name: '酷狗音乐',
+                    url: 'https://www.kugou.com/yy/html/search.html#searchType=song&searchKeyWord={keyword}',
+                    homepage: 'https://www.kugou.com',
+                    icon: 'fas fa-headphones',
+                    color: '#3B9DD9',
+                    description: '搜索歌曲、歌词...',
+                    custom: false
+                },
+                {
+                    id: 'spotify',
+                    name: 'Spotify',
+                    url: 'https://open.spotify.com/search/{keyword}',
+                    homepage: 'https://open.spotify.com',
+                    icon: 'fab fa-spotify',
+                    color: '#1DB954',
+                    description: '搜索全球音乐...',
+                    custom: false
+                },
+                {
+                    id: 'youtubeMusic',
+                    name: 'YouTube Music',
+                    url: 'https://music.youtube.com/search?q={keyword}',
+                    homepage: 'https://music.youtube.com',
+                    icon: 'fab fa-youtube',
+                    color: '#FF0000',
+                    description: '搜索YouTube音乐...',
+                    custom: false
+                },
+                {
+                    id: 'appleMusic',
+                    name: 'Apple Music',
+                    url: 'https://music.apple.com/us/search?term={keyword}',
+                    homepage: 'https://music.apple.com',
+                    icon: 'fab fa-apple',
+                    color: '#FA243C',
+                    description: '搜索Apple音乐...',
+                    custom: false
+                },
+                {
+                    id: 'soundcloud',
+                    name: 'SoundCloud',
+                    url: 'https://soundcloud.com/search?q={keyword}',
+                    homepage: 'https://soundcloud.com',
+                    icon: 'fab fa-soundcloud',
+                    color: '#FF3300',
+                    description: '搜索独立音乐...',
+                    custom: false
+                },
+                {
+                    id: 'bandcamp',
+                    name: 'Bandcamp',
+                    url: 'https://bandcamp.com/search?q={keyword}',
+                    homepage: 'https://bandcamp.com',
+                    icon: 'fas fa-compact-disc',
+                    color: '#629AA9',
+                    description: '搜索独立艺术家...',
+                    custom: false
+                }
+            ],
+            
+            // 学习类
+            learning: [
+                {
+                    id: 'coursera',
+                    name: 'Coursera',
+                    url: 'https://www.coursera.org/search?query={keyword}',
+                    homepage: 'https://www.coursera.org',
+                    icon: 'fas fa-graduation-cap',
+                    color: '#2A73CC',
+                    description: '搜索在线课程...',
+                    custom: false
+                },
+                {
+                    id: 'edx',
+                    name: 'edX',
+                    url: 'https://www.edx.org/search?q={keyword}',
+                    homepage: 'https://www.edx.org',
+                    icon: 'fas fa-university',
+                    color: '#02262B',
+                    description: '搜索大学课程...',
+                    custom: false
+                },
+                {
+                    id: 'udemy',
+                    name: 'Udemy',
+                    url: 'https://www.udemy.com/courses/search/?src=ukw&q={keyword}',
+                    homepage: 'https://www.udemy.com',
+                    icon: 'fas fa-chalkboard-teacher',
+                    color: '#A435F0',
+                    description: '搜索技能课程...',
+                    custom: false
+                },
+                {
+                    id: 'khan',
+                    name: '可汗学院',
+                    url: 'https://www.khanacademy.org/search?page_search_query={keyword}',
+                    homepage: 'https://www.khanacademy.org',
+                    icon: 'fas fa-school',
+                    color: '#14BF96',
+                    description: '搜索免费教育内容...',
+                    custom: false
+                },
+                {
+                    id: 'icourse163',
+                    name: '中国大学MOOC',
+                    url: 'https://www.icourse163.org/search.htm?search={keyword}',
+                    homepage: 'https://www.icourse163.org',
+                    icon: 'fas fa-laptop-house',
+                    color: '#D42B32',
+                    description: '搜索国内大学课程...',
+                    custom: false
+                },
+                {
+                    id: 'xuetangx',
+                    name: '学堂在线',
+                    url: 'https://next.xuetangx.com/search?query={keyword}',
+                    homepage: 'https://www.xuetangx.com',
+                    icon: 'fas fa-chalkboard',
+                    color: '#2D6CA2',
+                    description: '搜索清华课程...',
+                    custom: false
+                },
+                {
+                    id: 'skillshare',
+                    name: 'Skillshare',
+                    url: 'https://www.skillshare.com/search?query={keyword}',
+                    homepage: 'https://www.skillshare.com',
+                    icon: 'fas fa-paint-brush',
+                    color: '#00FF99',
+                    description: '搜索创意技能课程...',
+                    custom: false
+                },
+                {
+                    id: 'pluralsight',
+                    name: 'Pluralsight',
+                    url: 'https://www.pluralsight.com/search?q={keyword}',
+                    homepage: 'https://www.pluralsight.com',
+                    icon: 'fas fa-desktop',
+                    color: '#F15A2B',
+                    description: '搜索技术培训课程...',
+                    custom: false
+                },
+                {
+                    id: 'udacity',
+                    name: 'Udacity',
+                    url: 'https://www.udacity.com/courses/all?search={keyword}',
+                    homepage: 'https://www.udacity.com',
+                    icon: 'fas fa-rocket',
+                    color: '#02B3E4',
+                    description: '搜索纳米学位课程...',
+                    custom: false
+                },
+                {
+                    id: 'futurelearn',
+                    name: 'FutureLearn',
+                    url: 'https://www.futurelearn.com/search?q={keyword}',
+                    homepage: 'https://www.futurelearn.com',
+                    icon: 'fas fa-globe-europe',
+                    color: '#DE0D6C',
+                    description: '搜索英国大学课程...',
+                    custom: false
+                }
+            ],
+            
+            // 工具类
+            tools: [
+                {
+                    id: 'deepL',
+                    name: 'DeepL翻译',
+                    url: 'https://www.deepl.com/translator#auto/auto/{keyword}',
+                    homepage: 'https://www.deepl.com/translator',
+                    icon: 'fas fa-language',
+                    color: '#0D2B4E',
+                    description: '翻译文本内容...',
+                    custom: false
+                },
+                {
+                    id: 'googleTranslate',
+                    name: '谷歌翻译',
+                    url: 'https://translate.google.com/?sl=auto&tl=zh-CN&text={keyword}',
+                    homepage: 'https://translate.google.com',
+                    icon: 'fas fa-exchange-alt',
+                    color: '#4285F4',
+                    description: '多语言翻译...',
+                    custom: false
+                },
+                {
+                    id: 'wolframalpha',
+                    name: 'WolframAlpha',
+                    url: 'https://www.wolframalpha.com/input?i={keyword}',
+                    homepage: 'https://www.wolframalpha.com',
+                    icon: 'fas fa-square-root-alt',
+                    color: '#D10C0C',
+                    description: '计算、知识引擎...',
+                    custom: false
+                },
+                {
+                    id: 'canva',
+                    name: 'Canva',
+                    url: 'https://www.canva.com/templates/search/{keyword}',
+                    homepage: 'https://www.canva.com',
+                    icon: 'fas fa-palette',
+                    color: '#00C4CC',
+                    description: '搜索设计模板...',
+                    custom: false
+                },
+                {
+                    id: 'figma',
+                    name: 'Figma社区',
+                    url: 'https://www.figma.com/community/search?resource_type=mixed&sort_by=popular&query={keyword}',
+                    homepage: 'https://www.figma.com',
+                    icon: 'fab fa-figma',
+                    color: '#F24E1E',
+                    description: '搜索设计资源...',
+                    custom: false
+                },
+                {
+                    id: 'unsplash',
+                    name: 'Unsplash',
+                    url: 'https://unsplash.com/s/photos/{keyword}',
+                    homepage: 'https://unsplash.com',
+                    icon: 'fas fa-camera',
+                    color: '#000000',
+                    description: '搜索高质量图片...',
+                    custom: false
+                },
+                {
+                    id: 'pexels',
+                    name: 'Pexels',
+                    url: 'https://www.pexels.com/zh-cn/search/{keyword}',
+                    homepage: 'https://www.pexels.com',
+                    icon: 'fas fa-images',
+                    color: '#05A081',
+                    description: '搜索免费图片...',
+                    custom: false
+                },
+                {
+                    id: 'pixabay',
+                    name: 'Pixabay',
+                    url: 'https://pixabay.com/images/search/{keyword}',
+                    homepage: 'https://pixabay.com',
+                    icon: 'fas fa-image',
+                    color: '#2EC66D',
+                    description: '搜索免费图库...',
+                    custom: false
+                },
+                {
+                    id: 'flaticon',
+                    name: 'Flaticon',
+                    url: 'https://www.flaticon.com/search?word={keyword}',
+                    homepage: 'https://www.flaticon.com',
+                    icon: 'fas fa-icons',
+                    color: '#2B2D42',
+                    description: '搜索图标...',
+                    custom: false
+                },
+                {
+                    id: 'icons8',
+                    name: 'Icons8',
+                    url: 'https://icons8.com/icons/set/{keyword}',
+                    homepage: 'https://icons8.com',
+                    icon: 'fas fa-icons',
+                    color: '#1FB141',
+                    description: '搜索图标库...',
+                    custom: false
+                }
+            ],
+            
+            // 新闻资讯类
+            news: [
+                {
+                    id: 'toutiao',
+                    name: '今日头条',
+                    url: 'https://so.toutiao.com/search?keyword={keyword}',
+                    homepage: 'https://www.toutiao.com',
+                    icon: 'fas fa-newspaper',
+                    color: '#E63939',
+                    description: '搜索新闻资讯...',
+                    custom: false
+                },
+                {
+                    id: 'bbc',
+                    name: 'BBC新闻',
+                    url: 'https://www.bbc.co.uk/search?q={keyword}',
+                    homepage: 'https://www.bbc.co.uk',
+                    icon: 'fas fa-broadcast-tower',
+                    color: '#B80000',
+                    description: '搜索国际新闻...',
+                    custom: false
+                },
+                {
+                    id: 'cnn',
+                    name: 'CNN',
+                    url: 'https://edition.cnn.com/search?q={keyword}',
+                    homepage: 'https://edition.cnn.com',
+                    icon: 'fas fa-tv',
+                    color: '#CC0000',
+                    description: '搜索美国新闻...',
+                    custom: false
+                },
+                {
+                    id: 'reuters',
+                    name: '路透社',
+                    url: 'https://www.reuters.com/search/news?blob={keyword}',
+                    homepage: 'https://www.reuters.com',
+                    icon: 'fas fa-globe-americas',
+                    color: '#FF8000',
+                    description: '搜索财经新闻...',
+                    custom: false
+                },
+                {
+                    id: 'nytimes',
+                    name: '纽约时报',
+                    url: 'https://www.nytimes.com/search?query={keyword}',
+                    homepage: 'https://www.nytimes.com',
+                    icon: 'fas fa-newspaper',
+                    color: '#000000',
+                    description: '搜索纽约时报新闻...',
+                    custom: false
+                },
+                {
+                    id: 'theguardian',
+                    name: '卫报',
+                    url: 'https://www.theguardian.com/search?q={keyword}',
+                    homepage: 'https://www.theguardian.com',
+                    icon: 'fas fa-newspaper',
+                    color: '#052962',
+                    description: '搜索英国新闻...',
+                    custom: false
+                },
+                {
+                    id: 'bloomberg',
+                    name: '彭博社',
+                    url: 'https://www.bloomberg.com/search?query={keyword}',
+                    homepage: 'https://www.bloomberg.com',
+                    icon: 'fas fa-chart-line',
+                    color: '#000000',
+                    description: '搜索财经新闻...',
+                    custom: false
+                }
+            ],
+            
+            // 阅读类
+            reading: [
+                {
+                    id: 'zhihuRead',
+                    name: '知乎盐选',
+                    url: 'https://www.zhihu.com/search?type=content&q={keyword}',
+                    homepage: 'https://www.zhihu.com',
+                    icon: 'fas fa-book-open',
+                    color: '#0066FF',
+                    description: '搜索深度阅读内容...',
+                    custom: false
+                },
+                {
+                    id: 'weixinRead',
+                    name: '微信读书',
+                    url: 'https://weread.qq.com/web/search/search?keyword={keyword}',
+                    homepage: 'https://weread.qq.com',
+                    icon: 'fab fa-weixin',
+                    color: '#07C160',
+                    description: '搜索电子书...',
+                    custom: false
+                },
+                {
+                    id: 'amazonKindle',
+                    name: 'Amazon Kindle',
+                    url: 'https://www.amazon.com/s?k={keyword}&i=digital-text',
+                    homepage: 'https://www.amazon.com',
+                    icon: 'fas fa-book',
+                    color: '#00A8E1',
+                    description: '搜索Kindle电子书...',
+                    custom: false
+                },
+                {
+                    id: 'goodreads',
+                    name: 'Goodreads',
+                    url: 'https://www.goodreads.com/search?q={keyword}',
+                    homepage: 'https://www.goodreads.com',
+                    icon: 'fab fa-goodreads',
+                    color: '#553B08',
+                    description: '搜索书籍评价...',
+                    custom: false
+                },
+                {
+                    id: 'medium',
+                    name: 'Medium',
+                    url: 'https://medium.com/search?q={keyword}',
+                    homepage: 'https://medium.com',
+                    icon: 'fab fa-medium',
+                    color: '#000000',
+                    description: '搜索优质文章...',
+                    custom: false
+                }
+            ],
+            
+            // 金融类
+            finance: [
+                {
+                    id: 'eastmoney',
+                    name: '东方财富',
+                    url: 'https://so.eastmoney.com/web/s?keyword={keyword}',
+                    homepage: 'https://www.eastmoney.com',
+                    icon: 'fas fa-chart-line',
+                    color: '#D32F2F',
+                    description: '搜索股票、财经...',
+                    custom: false
+                },
+                {
+                    id: 'sinaFinance',
+                    name: '新浪财经',
+                    url: 'https://search.sina.com.cn/?q={keyword}',
+                    homepage: 'https://finance.sina.com.cn',
+                    icon: 'fas fa-yen-sign',
+                    color: '#E6162D',
+                    description: '搜索财经资讯...',
+                    custom: false
+                },
+                {
+                    id: 'hexun',
+                    name: '和讯网',
+                    url: 'https://search.hexun.com/default.html?key={keyword}',
+                    homepage: 'https://www.hexun.com',
+                    icon: 'fas fa-chart-bar',
+                    color: '#0C4DA2',
+                    description: '搜索财经数据...',
+                    custom: false
+                },
+                {
+                    id: 'investing',
+                    name: 'Investing.com',
+                    url: 'https://www.investing.com/search/?q={keyword}',
+                    homepage: 'https://www.investing.com',
+                    icon: 'fas fa-globe',
+                    color: '#0B5AA9',
+                    description: '搜索全球投资信息...',
+                    custom: false
+                },
+                {
+                    id: 'yahooFinance',
+                    name: 'Yahoo财经',
+                    url: 'https://finance.yahoo.com/quote/{keyword}',
+                    homepage: 'https://finance.yahoo.com',
+                    icon: 'fab fa-yahoo',
+                    color: '#6001D2',
+                    description: '搜索美股信息...',
+                    custom: false
+                }
+            ],
+            
+            // 健康类
+            health: [
+                {
+                    id: 'webmd',
+                    name: 'WebMD',
+                    url: 'https://www.webmd.com/search/search_results/default.aspx?query={keyword}',
+                    homepage: 'https://www.webmd.com',
+                    icon: 'fas fa-heartbeat',
+                    color: '#7AC143',
+                    description: '搜索医疗健康信息...',
+                    custom: false
+                },
+                {
+                    id: 'mayoclinic',
+                    name: 'Mayo Clinic',
+                    url: 'https://www.mayoclinic.org/search/search-results?q={keyword}',
+                    homepage: 'https://www.mayoclinic.org',
+                    icon: 'fas fa-hospital',
+                    color: '#004B87',
+                    description: '搜索医学信息...',
+                    custom: false
+                },
+                {
+                    id: 'healthline',
+                    name: 'Healthline',
+                    url: 'https://www.healthline.com/search?q={keyword}',
+                    homepage: 'https://www.healthline.com',
+                    icon: 'fas fa-stethoscope',
+                    color: '#00B67A',
+                    description: '搜索健康资讯...',
+                    custom: false
+                },
+                {
+                    id: 'who',
+                    name: '世界卫生组织',
+                    url: 'https://www.who.int/search?q={keyword}',
+                    homepage: 'https://www.who.int',
+                    icon: 'fas fa-globe-americas',
+                    color: '#0093D5',
+                    description: '搜索全球健康信息...',
+                    custom: false
+                }
+            ],
+            
+            // 自定义网站类
+            custom: []
+        };
+
+        // 用户设置管理
+        class SettingsManager {
+            constructor() {
+                this.settings = {
+                    enabledSites: {},
+                    siteOrder: {
+                        // 每个分类独立排序，包括'all'
+                        all: [],
+                        video: [],
+                        programming: [],
+                        knowledge: [],
+                        search: [],
+                        shopping: [],
+                        social: [],
+                        music: [],
+                        learning: [],
+                        tools: [],
+                        news: [],
+                        reading: [],
+                        finance: [],
+                        health: [],
+                        custom: []
+                    },
+                    customSites: [],
+                    customCategories: [], // 存储自定义分类
+                    features: {
+                        enableSort: false,
+                        enableHide: false
+                    },
+                    defaultCategory: 'all'
+                };
+                this.loadSettings();
+            }
+            
+            loadSettings() {
+                const saved = localStorage.getItem('searchStartPageSettings');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        this.settings = {
+                            ...this.settings,
+                            ...parsed,
+                            features: {
+                                ...this.settings.features,
+                                ...(parsed.features || {})
+                            },
+                            // 确保siteOrder有所有分类
+                            siteOrder: {
+                                ...this.settings.siteOrder,
+                                ...(parsed.siteOrder || {})
+                            }
+                        };
+                    } catch (e) {
+                        console.error('加载设置失败，使用默认设置:', e);
+                        this.initializeDefaultSettings();
+                    }
+                } else {
+                    this.initializeDefaultSettings();
+                }
+                
+                // 确保自定义网站被加载到数据库中
+                if (this.settings.customSites && this.settings.customSites.length > 0) {
+                    searchEnginesDB.custom = this.settings.customSites;
+                }
+                
+                // 确保所有默认网站都被启用
+                this.ensureDefaultSitesEnabled();
+            }
+            
+            initializeDefaultSettings() {
+                this.enableAllDefaultSites();
+                this.initializeDefaultOrder();
+            }
+            
+            saveSettings() {
+                // 保存自定义网站到设置中
+                this.settings.customSites = searchEnginesDB.custom;
+                try {
+                    localStorage.setItem('searchStartPageSettings', JSON.stringify(this.settings));
+                } catch (e) {
+                    console.error('保存设置失败:', e);
+                }
+            }
+            
+            enableAllDefaultSites() {
+                this.settings.enabledSites = {};
+                for (const category in searchEnginesDB) {
+                    if (category !== 'custom') {
+                        searchEnginesDB[category].forEach(site => {
+                            this.settings.enabledSites[site.id] = true;
+                        });
+                    }
+                }
+            }
+            
+            ensureDefaultSitesEnabled() {
+                // 确保所有默认网站都在enabledSites中有记录
+                for (const category in searchEnginesDB) {
+                    if (category !== 'custom') {
+                        searchEnginesDB[category].forEach(site => {
+                            if (this.settings.enabledSites[site.id] === undefined) {
+                                this.settings.enabledSites[site.id] = true;
+                            }
+                        });
+                    }
+                }
+            }
+            
+            initializeDefaultOrder() {
+                // 为每个分类初始化默认顺序
+                for (const category in searchEnginesDB) {
+                    if (searchEnginesDB[category].length > 0) {
+                        this.settings.siteOrder[category] = searchEnginesDB[category].map(site => site.id);
+                    }
+                }
+                // 初始化'all'分类的顺序（所有网站的顺序）
+                this.settings.siteOrder.all = [];
+                for (const category in searchEnginesDB) {
+                    this.settings.siteOrder.all = this.settings.siteOrder.all.concat(
+                        searchEnginesDB[category].map(site => site.id)
+                    );
+                }
+            }
+            
+            disableAllSites() {
+                this.settings.enabledSites = {};
+            }
+            
+            toggleSite(siteId, enabled) {
+                this.settings.enabledSites[siteId] = enabled;
+            }
+            
+            isSiteEnabled(siteId) {
+                return this.settings.enabledSites[siteId] === true;
+            }
+            
+            getEnabledCount() {
+                return Object.keys(this.settings.enabledSites).filter(id => this.settings.enabledSites[id]).length;
+            }
+            
+            updateSiteOrder(category, siteIds) {
+                this.settings.siteOrder[category] = siteIds;
+            }
+            
+            getSiteOrder(category) {
+                return this.settings.siteOrder[category] || [];
+            }
+            
+            addCustomSite(site) {
+                const siteId = 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const newSite = {
+                    ...site,
+                    id: siteId,
+                    custom: true
+                };
+                
+                // 如果选择了自定义分类且有输入分类名称
+                let targetCategory = site.category;
+                if (site.category === 'custom' && site.customCategoryName) {
+                    targetCategory = site.customCategoryName;
+                    // 添加到自定义分类列表
+                    if (!this.settings.customCategories.includes(targetCategory)) {
+                        this.settings.customCategories.push(targetCategory);
+                    }
+                    // 确保有这个分类的排序数组
+                    if (!this.settings.siteOrder[targetCategory]) {
+                        this.settings.siteOrder[targetCategory] = [];
+                    }
+                    // 确保数据库有这个分类
+                    if (!searchEnginesDB[targetCategory]) {
+                        searchEnginesDB[targetCategory] = [];
+                    }
+                    searchEnginesDB[targetCategory].push(newSite);
+                } else {
+                    searchEnginesDB.custom.push(newSite);
+                    targetCategory = 'custom';
+                }
+                
+                // 添加到排序顺序
+                if (!this.settings.siteOrder[targetCategory]) {
+                    this.settings.siteOrder[targetCategory] = [];
+                }
+                this.settings.siteOrder[targetCategory].push(siteId);
+                
+                // 默认启用
+                this.toggleSite(siteId, true);
+                
+                return { siteId, category: targetCategory };
+            }
+            
+            removeCustomSite(siteId) {
+                // 在所有分类中查找并删除
+                for (const category in searchEnginesDB) {
+                    const index = searchEnginesDB[category].findIndex(site => site.id === siteId);
+                    if (index !== -1) {
+                        searchEnginesDB[category].splice(index, 1);
+                        
+                        // 从排序顺序中移除
+                        if (this.settings.siteOrder[category]) {
+                            const orderIndex = this.settings.siteOrder[category].indexOf(siteId);
+                            if (orderIndex !== -1) {
+                                this.settings.siteOrder[category].splice(orderIndex, 1);
+                            }
+                        }
+                        
+                        // 从启用列表中移除
+                        delete this.settings.enabledSites[siteId];
+                        
+                        return { success: true, category };
+                    }
+                }
+                return { success: false };
+            }
+            
+            setFeature(feature, value) {
+                this.settings.features[feature] = value;
+            }
+            
+            getFeature(feature) {
+                return this.settings.features[feature] || false;
+            }
+            
+            exportSettings() {
+                const data = {
+                    settings: this.settings,
+                    version: '1.4',
+                    exportDate: new Date().toISOString()
+                };
+                return JSON.stringify(data, null, 2);
+            }
+            
+            importSettings(jsonData) {
+                try {
+                    const data = JSON.parse(jsonData);
+                    if (data.settings) {
+                        this.settings = {
+                            ...this.settings,
+                            ...data.settings,
+                            features: {
+                                ...this.settings.features,
+                                ...(data.settings.features || {})
+                            },
+                            siteOrder: {
+                                ...this.settings.siteOrder,
+                                ...(data.settings.siteOrder || {})
+                            }
+                        };
+                        
+                        // 确保自定义网站被加载到数据库中
+                        if (this.settings.customSites && this.settings.customSites.length > 0) {
+                            searchEnginesDB.custom = this.settings.customSites;
+                        }
+                        
+                        this.saveSettings();
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('导入设置失败:', error);
+                }
+                return false;
+            }
+            
+            resetOrder() {
+                this.initializeDefaultOrder();
+                this.saveSettings();
+            }
+            
+            // 获取当前分类的排序网站
+            getSortedSitesForCategory(category) {
+                const orderedSiteIds = this.getSiteOrder(category) || [];
+                
+                // 获取当前分类的所有网站
+                let allSites = [];
+                if (category === 'all') {
+                    // 'all'分类包含所有网站的混合
+                    for (const cat in searchEnginesDB) {
+                        allSites = allSites.concat(searchEnginesDB[cat] || []);
+                    }
+                } else {
+                    allSites = searchEnginesDB[category] || [];
+                }
+                
+                // 按保存的顺序排序
+                const sortedSites = [];
+                const siteMap = new Map(allSites.map(site => [site.id, site]));
+                
+                // 首先添加有序的网站
+                orderedSiteIds.forEach(siteId => {
+                    const site = siteMap.get(siteId);
+                    if (site && this.isSiteEnabled(site.id)) {
+                        sortedSites.push(site);
+                        siteMap.delete(siteId);
+                    }
+                });
+                
+                // 然后添加剩余的网站（新添加或未排序的）
+                siteMap.forEach(site => {
+                    if (this.isSiteEnabled(site.id)) {
+                        sortedSites.push(site);
+                    }
+                });
+                
+                return sortedSites;
+            }
+            
+            // 添加自定义分类
+            addCustomCategory(categoryName) {
+                if (!this.settings.customCategories.includes(categoryName)) {
+                    this.settings.customCategories.push(categoryName);
+                    if (!this.settings.siteOrder[categoryName]) {
+                        this.settings.siteOrder[categoryName] = [];
+                    }
+                    if (!searchEnginesDB[categoryName]) {
+                        searchEnginesDB[categoryName] = [];
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // 自定义提示框管理
+        class AlertManager {
+            constructor() {
+                this.alert = document.getElementById('customAlert');
+                this.alertTitle = document.getElementById('alertTitle');
+                this.alertMessage = document.getElementById('alertMessage');
+                this.alertIcon = document.getElementById('alertIcon');
+                this.alertCancel = document.getElementById('alertCancel');
+                this.alertConfirm = document.getElementById('alertConfirm');
+                
+                this.init();
+            }
+            
+            init() {
+                this.alertCancel.addEventListener('click', () => this.hide());
+                this.alert.addEventListener('click', (e) => {
+                    if (e.target === this.alert) {
+                        this.hide();
+                    }
+                });
+            }
+            
+            show(options) {
+                const {
+                    title = '提示',
+                    message = '',
+                    type = 'info', // info, success, warning, error
+                    showCancel = true,
+                    cancelText = '取消',
+                    confirmText = '确定',
+                    onConfirm = () => {},
+                    onCancel = () => {}
+                } = options;
+                
+                this.alertTitle.textContent = title;
+                this.alertMessage.textContent = message;
+                
+                // 设置图标
+                this.alertIcon.className = 'alert-icon';
+                switch(type) {
+                    case 'success':
+                        this.alertIcon.classList.add('success');
+                        this.alertIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                        break;
+                    case 'warning':
+                        this.alertIcon.classList.add('warning');
+                        this.alertIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                        break;
+                    case 'error':
+                        this.alertIcon.classList.add('error');
+                        this.alertIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
+                        break;
+                    default:
+                        this.alertIcon.classList.add('success');
+                        this.alertIcon.innerHTML = '<i class="fas fa-info-circle"></i>';
+                }
+                
+                // 设置按钮
+                this.alertCancel.textContent = cancelText;
+                this.alertCancel.style.display = showCancel ? 'inline-block' : 'none';
+                this.alertConfirm.textContent = confirmText;
+                
+                // 移除旧的事件监听器
+                const newConfirm = this.alertConfirm.cloneNode(true);
+                this.alertConfirm.parentNode.replaceChild(newConfirm, this.alertConfirm);
+                this.alertConfirm = newConfirm;
+                
+                const newCancel = this.alertCancel.cloneNode(true);
+                this.alertCancel.parentNode.replaceChild(newCancel, this.alertCancel);
+                this.alertCancel = newCancel;
+                
+                // 添加新的事件监听器
+                this.alertConfirm.addEventListener('click', () => {
+                    onConfirm();
+                    this.hide();
+                });
+                
+                this.alertCancel.addEventListener('click', () => {
+                    onCancel();
+                    this.hide();
+                });
+                
+                // 显示提示框
+                this.alert.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            hide() {
+                this.alert.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            confirm(options) {
+                return new Promise((resolve) => {
+                    this.show({
+                        ...options,
+                        onConfirm: () => resolve(true),
+                        onCancel: () => resolve(false)
+                    });
+                });
+            }
+            
+            alert(options) {
+                return new Promise((resolve) => {
+                    this.show({
+                        ...options,
+                        showCancel: false,
+                        onConfirm: () => resolve()
+                    });
+                });
+            }
+        }
+
+        // 应用主类
+        class SearchStartPage {
+            constructor() {
+                this.settingsManager = new SettingsManager();
+                this.alertManager = new AlertManager();
+                this.currentCategory = 'all';
+                this.sortableInstance = null;
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.renderCategoryTabs();
+                this.renderCategoryFilters();
+                this.renderSearchGrid();
+                this.updateCustomSitesSection();
+                this.loadFeatureSwitches();
+                this.bindCustomCategoryInput();
+            }
+            
+            bindEvents() {
+                // 设置面板
+                document.getElementById('openSettings').addEventListener('click', () => this.openSettings());
+                document.getElementById('closeSettings').addEventListener('click', () => this.closeSettings());
+                document.getElementById('overlay').addEventListener('click', () => this.closeSettings());
+                
+                // 功能开关
+                document.getElementById('enableSort').addEventListener('change', (e) => {
+                    this.settingsManager.setFeature('enableSort', e.target.checked);
+                    this.renderSearchGrid();
+                    this.updateSortingHint();
+                    this.settingsManager.saveSettings();
+                });
+                
+                document.getElementById('enableHide').addEventListener('change', (e) => {
+                    this.settingsManager.setFeature('enableHide', e.target.checked);
+                    this.renderSearchGrid();
+                    this.settingsManager.saveSettings();
+                });
+                
+                // 设置操作
+                document.getElementById('selectAll').addEventListener('click', () => this.selectAllSites());
+                document.getElementById('deselectAll').addEventListener('click', () => this.deselectAllSites());
+                document.getElementById('resetOrder').addEventListener('click', () => this.resetOrder());
+                document.getElementById('saveSettings').addEventListener('click', () => this.saveAndCloseSettings());
+                
+                // 添加自定义网站
+                document.getElementById('addCustomSite').addEventListener('click', () => this.addCustomSite());
+                
+                // 导入导出
+                document.getElementById('exportSettings').addEventListener('click', () => this.exportSettings());
+                document.getElementById('importSettings').addEventListener('click', () => this.triggerImport());
+                document.getElementById('importFile').addEventListener('change', (e) => this.importSettings(e));
+                
+                // 回车键搜索
+                document.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && e.target.classList.contains('search-input')) {
+                        e.preventDefault();
+                        const siteId = e.target.dataset.siteId;
+                        this.search(siteId, e.target.value);
+                    }
+                });
+                
+                // 点击图标或网站名称打开主页
+                document.addEventListener('click', (e) => {
+                    const icon = e.target.closest('.icon-container');
+                    const siteName = e.target.closest('.search-info h3');
+                    
+                    if (icon) {
+                        const siteCard = icon.closest('.search-card');
+                        const siteId = siteCard.dataset.siteId;
+                        this.openHomepage(siteId);
+                        e.preventDefault();
+                    }
+                    
+                    if (siteName) {
+                        const siteCard = siteName.closest('.search-card');
+                        const siteId = siteCard.dataset.siteId;
+                        this.openHomepage(siteId);
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            bindCustomCategoryInput() {
+                const categorySelect = document.getElementById('customSiteCategory');
+                const customCategoryInput = document.getElementById('customCategoryInput');
+                
+                categorySelect.addEventListener('change', () => {
+                    if (categorySelect.value === 'custom') {
+                        customCategoryInput.style.display = 'block';
+                        customCategoryInput.required = true;
+                    } else {
+                        customCategoryInput.style.display = 'none';
+                        customCategoryInput.required = false;
+                    }
+                });
+            }
+            
+            loadFeatureSwitches() {
+                const enableSort = this.settingsManager.getFeature('enableSort');
+                const enableHide = this.settingsManager.getFeature('enableHide');
+                
+                document.getElementById('enableSort').checked = enableSort;
+                document.getElementById('enableHide').checked = enableHide;
+                
+                this.updateSortingHint();
+            }
+            
+            updateSortingHint() {
+                const enableSort = this.settingsManager.getFeature('enableSort');
+                const sortingHint = document.getElementById('sortingHint');
+                
+                if (enableSort) {
+                    sortingHint.classList.remove('disabled');
+                } else {
+                    sortingHint.classList.add('disabled');
+                }
+            }
+            
+            renderCategoryTabs() {
+                const container = document.getElementById('categoryTabs');
+                
+                // 获取所有分类
+                const categories = {};
+                
+                // 添加"全部"分类
+                categories['all'] = { name: '全部网站', icon: 'fas fa-globe' };
+                
+                // 添加预定义分类
+                const categoryNames = {
+                    video: '视频',
+                    programming: '编程',
+                    knowledge: '知识',
+                    search: '搜索',
+                    shopping: '购物',
+                    social: '社交',
+                    music: '音乐',
+                    learning: '学习',
+                    tools: '工具',
+                    news: '新闻',
+                    reading: '阅读',
+                    finance: '金融',
+                    health: '健康'
+                };
+                
+                // 添加有网站的分类
+                for (const key in categoryNames) {
+                    if (searchEnginesDB[key] && searchEnginesDB[key].length > 0) {
+                        categories[key] = {
+                            name: categoryNames[key],
+                            icon: this.getCategoryIcon(key)
+                        };
+                    }
+                }
+                
+                // 添加自定义分类
+                if (this.settingsManager.settings.customCategories) {
+                    this.settingsManager.settings.customCategories.forEach(cat => {
+                        if (searchEnginesDB[cat] && searchEnginesDB[cat].length > 0) {
+                            categories[cat] = {
+                                name: cat,
+                                icon: 'fas fa-user-cog'
+                            };
+                        }
+                    });
+                }
+                
+                // 添加自定义网站分类（如果有自定义网站）
+                if (searchEnginesDB.custom && searchEnginesDB.custom.length > 0) {
+                    categories['custom'] = {
+                        name: '自定义',
+                        icon: 'fas fa-user-cog'
+                    };
+                }
+                
+                container.innerHTML = Object.entries(categories).map(([id, category]) => `
+                    <button class="category-tab ${id === this.currentCategory ? 'active' : ''}" 
+                            data-category="${id}"
+                            onclick="app.switchCategory('${id}')">
+                        <i class="${category.icon}"></i> ${category.name}
+                    </button>
+                `).join('');
+            }
+            
+            renderCategoryFilters() {
+                const container = document.getElementById('categoryFilters');
+                
+                // 获取所有分类
+                const categories = {};
+                categories['all'] = { name: '全部', icon: 'fas fa-globe' };
+                
+                // 添加预定义分类
+                const categoryNames = {
+                    video: '视频',
+                    programming: '编程',
+                    knowledge: '知识',
+                    search: '搜索',
+                    shopping: '购物',
+                    social: '社交',
+                    music: '音乐',
+                    learning: '学习',
+                    tools: '工具',
+                    news: '新闻',
+                    reading: '阅读',
+                    finance: '金融',
+                    health: '健康'
+                };
+                
+                for (const key in categoryNames) {
+                    if (searchEnginesDB[key] && searchEnginesDB[key].length > 0) {
+                        categories[key] = {
+                            name: categoryNames[key],
+                            icon: this.getCategoryIcon(key)
+                        };
+                    }
+                }
+                
+                // 添加自定义分类
+                if (this.settingsManager.settings.customCategories) {
+                    this.settingsManager.settings.customCategories.forEach(cat => {
+                        if (searchEnginesDB[cat] && searchEnginesDB[cat].length > 0) {
+                            categories[cat] = {
+                                name: cat,
+                                icon: 'fas fa-user-cog'
+                            };
+                        }
+                    });
+                }
+                
+                // 添加自定义网站分类
+                if (searchEnginesDB.custom && searchEnginesDB.custom.length > 0) {
+                    categories['custom'] = {
+                        name: '自定义',
+                        icon: 'fas fa-user-cog'
+                    };
+                }
+                
+                container.innerHTML = Object.entries(categories).map(([id, category]) => `
+                    <button class="category-filter ${id === 'all' ? 'active' : ''}" 
+                            data-category="${id}"
+                            onclick="app.filterSitesByCategory('${id}')">
+                        <i class="${category.icon}"></i> ${category.name}
+                    </button>
+                `).join('');
+            }
+            
+            renderSearchGrid() {
+                const container = document.getElementById('searchGrid');
+                const enabledSites = this.settingsManager.getSortedSitesForCategory(this.currentCategory);
+                
+                if (enabledSites.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('sortingHint').classList.add('disabled');
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                document.getElementById('emptyState').style.display = 'none';
+                
+                container.innerHTML = enabledSites.map(site => `
+                    <div class="search-card" data-site-id="${site.id}">
+                        ${this.renderCardControls(site)}
+                        <div class="search-header">
+                            <div class="icon-container" style="background: ${site.color}" title="点击访问${site.name}主页">
+                                <i class="${site.icon}"></i>
+                            </div>
+                            <div class="search-info">
+                                <h3 title="点击访问${site.name}主页">${site.name} ${site.custom ? '<span style="font-size:0.7em;color:#94a3b8;">(自定义)</span>' : ''}</h3>
+                                <p>${site.description}</p>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="search-input" 
+                                   data-site-id="${site.id}"
+                                   placeholder="在 ${site.name} 搜索..." 
+                                   onkeypress="if(event.key === 'Enter') app.search('${site.id}', this.value)">
+                            <button onclick="app.search('${site.id}', this.previousElementSibling.value)">
+                                搜索
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 根据功能开关状态初始化排序
+                this.initSortableIfEnabled();
+            }
+            
+            renderCardControls(site) {
+                const enableHide = this.settingsManager.getFeature('enableHide');
+                const enableSort = this.settingsManager.getFeature('enableSort');
+                let controls = '<div class="card-controls">';
+                
+                // 隐藏按钮在左边
+                if (enableHide) {
+                    controls += `
+                        <button class="card-control-btn hide-btn" onclick="app.toggleSiteVisibility('${site.id}')" title="隐藏此网站">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    `;
+                }
+                
+                // 排序手柄在右边
+                if (enableSort) {
+                    controls += `
+                        <button class="card-control-btn sort-handle" title="拖拽排序">
+                            <i class="fas fa-arrows-alt"></i>
+                        </button>
+                    `;
+                }
+                
+                // 自定义网站的删除按钮
+                if (site.custom) {
+                    controls += `
+                        <button class="card-control-btn" onclick="app.deleteCustomSite('${site.id}')" title="删除此网站" style="color: #ef4444;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+                
+                controls += '</div>';
+                return controls;
+            }
+            
+            renderSitesGrid(category = 'all') {
+                const container = document.getElementById('sitesGrid');
+                const sites = this.getSitesByCategory(category);
+                
+                container.innerHTML = sites.map(site => `
+                    <label class="site-checkbox">
+                        <input type="checkbox" 
+                               ${this.settingsManager.isSiteEnabled(site.id) ? 'checked' : ''}
+                               onchange="app.toggleSiteSetting('${site.id}', this.checked)">
+                        <div class="site-info">
+                            <div class="small-icon" style="background: ${site.color}">
+                                <i class="${site.icon}"></i>
+                            </div>
+                            <span>${site.name} ${site.custom ? '(自定义)' : ''}</span>
+                        </div>
+                    </label>
+                `).join('');
+            }
+            
+            renderCustomSitesGrid() {
+                const container = document.getElementById('customSitesGrid');
+                let customSites = [];
+                
+                // 收集所有自定义网站（包括自定义分类中的）
+                for (const category in searchEnginesDB) {
+                    // 跳过预定义分类
+                    const predefined = ['video', 'programming', 'knowledge', 'search', 'shopping', 
+                                      'social', 'music', 'learning', 'tools', 'news', 'reading', 
+                                      'finance', 'health'];
+                    
+                    if (!predefined.includes(category) && category !== 'custom') {
+                        // 检查是否是自定义分类
+                        const sitesInCategory = searchEnginesDB[category] || [];
+                        const customSitesInCategory = sitesInCategory.filter(site => site.custom);
+                        customSites = customSites.concat(customSitesInCategory);
+                    }
+                }
+                
+                // 添加默认custom分类中的网站
+                customSites = customSites.concat(searchEnginesDB.custom || []);
+                
+                if (customSites.length === 0) {
+                    document.getElementById('customSitesSection').style.display = 'none';
+                    return;
+                }
+                
+                document.getElementById('customSitesSection').style.display = 'block';
+                container.innerHTML = customSites.map(site => `
+                    <div class="site-checkbox" style="justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" 
+                                   ${this.settingsManager.isSiteEnabled(site.id) ? 'checked' : ''}
+                                   onchange="app.toggleSiteSetting('${site.id}', this.checked)">
+                            <div class="site-info">
+                                <div class="small-icon" style="background: ${site.color}">
+                                    <i class="${site.icon}"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">${site.name}</div>
+                                    <div style="font-size: 0.8rem; color: #64748b;">${site.description}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="card-control-btn" onclick="app.deleteCustomSite('${site.id}')" title="删除此网站" style="color: #ef4444;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            getCategoryIcon(category) {
+                const icons = {
+                    video: 'fas fa-video',
+                    programming: 'fas fa-code',
+                    knowledge: 'fas fa-book',
+                    search: 'fas fa-search',
+                    shopping: 'fas fa-shopping-cart',
+                    social: 'fas fa-users',
+                    music: 'fas fa-music',
+                    learning: 'fas fa-graduation-cap',
+                    tools: 'fas fa-tools',
+                    news: 'fas fa-newspaper',
+                    reading: 'fas fa-book-open',
+                    finance: 'fas fa-chart-line',
+                    health: 'fas fa-heartbeat',
+                    custom: 'fas fa-user-cog',
+                    all: 'fas fa-globe'
+                };
+                return icons[category] || 'fas fa-globe';
+            }
+            
+            getSitesByCategory(category) {
+                if (category === 'all') {
+                    // 获取所有网站
+                    let allSites = [];
+                    for (const cat in searchEnginesDB) {
+                        allSites = allSites.concat(searchEnginesDB[cat] || []);
+                    }
+                    return allSites;
+                }
+                return searchEnginesDB[category] || [];
+            }
+            
+            initSortableIfEnabled() {
+                const enableSort = this.settingsManager.getFeature('enableSort');
+                
+                if (!enableSort) {
+                    if (this.sortableInstance) {
+                        this.sortableInstance.destroy();
+                        this.sortableInstance = null;
+                    }
+                    return;
+                }
+                
+                if (this.sortableInstance) {
+                    this.sortableInstance.destroy();
+                }
+                
+                const container = document.getElementById('searchGrid');
+                if (!container) return;
+                
+                this.sortableInstance = new Sortable(container, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    handle: '.sort-handle',
+                    onEnd: (evt) => {
+                        this.saveCurrentOrder();
+                    }
+                });
+            }
+            
+            saveCurrentOrder() {
+                const container = document.getElementById('searchGrid');
+                const siteIds = Array.from(container.children)
+                    .map(card => card.getAttribute('data-site-id'))
+                    .filter(id => id);
+                
+                // 保存当前分类的排序顺序
+                this.settingsManager.updateSiteOrder(this.currentCategory, siteIds);
+                this.settingsManager.saveSettings();
+            }
+            
+            switchCategory(category) {
+                this.currentCategory = category;
+                this.renderCategoryTabs();
+                this.renderSearchGrid();
+            }
+            
+            filterSitesByCategory(category) {
+                // 更新按钮状态
+                document.querySelectorAll('.category-filter').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.renderSitesGrid(category);
+                this.updateCustomSitesSection();
+            }
+            
+            search(siteId, keyword) {
+                if (!keyword || !keyword.trim()) {
+                    this.alertManager.alert({
+                        title: '提示',
+                        message: '请输入搜索关键词！',
+                        type: 'warning'
+                    });
+                    return;
+                }
+                
+                // 查找网站配置
+                let targetSite = null;
+                for (const category in searchEnginesDB) {
+                    const site = searchEnginesDB[category].find(s => s.id === siteId);
+                    if (site) {
+                        targetSite = site;
+                        break;
+                    }
+                }
+                
+                if (targetSite) {
+                    const encodedKeyword = encodeURIComponent(keyword.trim());
+                    const url = targetSite.url.replace('{keyword}', encodedKeyword);
+                    window.open(url, '_blank');
+                }
+            }
+            
+            openHomepage(siteId) {
+                // 查找网站配置
+                let targetSite = null;
+                for (const category in searchEnginesDB) {
+                    const site = searchEnginesDB[category].find(s => s.id === siteId);
+                    if (site) {
+                        targetSite = site;
+                        break;
+                    }
+                }
+                
+                if (targetSite && targetSite.homepage) {
+                    window.open(targetSite.homepage, '_blank');
+                } else if (targetSite) {
+                    // 如果没有主页，尝试从搜索URL中提取
+                    try {
+                        const urlObj = new URL(targetSite.url.replace('{keyword}', ''));
+                        window.open(urlObj.origin, '_blank');
+                    } catch (e) {
+                        this.alertManager.alert({
+                            title: '错误',
+                            message: '无法打开网站主页',
+                            type: 'error'
+                        });
+                    }
+                }
+            }
+            
+            openSettings() {
+                document.getElementById('settingsPanel').classList.add('active');
+                document.getElementById('overlay').classList.add('active');
+                this.renderSitesGrid('all');
+                this.updateCustomSitesSection();
+                this.loadFeatureSwitches();
+            }
+            
+            closeSettings() {
+                document.getElementById('settingsPanel').classList.remove('active');
+                document.getElementById('overlay').classList.remove('active');
+            }
+            
+            toggleSiteSetting(siteId, enabled) {
+                this.settingsManager.toggleSite(siteId, enabled);
+            }
+            
+            toggleSiteVisibility(siteId) {
+                this.settingsManager.toggleSite(siteId, false);
+                this.renderSearchGrid();
+                this.settingsManager.saveSettings();
+                
+                this.alertManager.alert({
+                    title: '已隐藏',
+                    message: '网站已隐藏，可在设置中重新启用',
+                    type: 'success'
+                });
+            }
+            
+            selectAllSites() {
+                const category = document.querySelector('.category-filter.active').dataset.category;
+                const sites = this.getSitesByCategory(category);
+                sites.forEach(site => {
+                    this.settingsManager.toggleSite(site.id, true);
+                });
+                this.renderSitesGrid(category);
+                this.updateCustomSitesSection();
+            }
+            
+            deselectAllSites() {
+                const category = document.querySelector('.category-filter.active').dataset.category;
+                const sites = this.getSitesByCategory(category);
+                sites.forEach(site => {
+                    this.settingsManager.toggleSite(site.id, false);
+                });
+                this.renderSitesGrid(category);
+                this.updateCustomSitesSection();
+            }
+            
+            async resetOrder() {
+                const confirmed = await this.alertManager.confirm({
+                    title: '确认重置',
+                    message: '确定要重置所有排序顺序吗？这将恢复为默认顺序。',
+                    type: 'warning'
+                });
+                
+                if (confirmed) {
+                    this.settingsManager.resetOrder();
+                    this.renderSearchGrid();
+                    this.alertManager.alert({
+                        title: '已重置',
+                        message: '排序顺序已重置！',
+                        type: 'success'
+                    });
+                }
+            }
+            
+            saveAndCloseSettings() {
+                this.settingsManager.saveSettings();
+                this.renderSearchGrid();
+                this.updateSortingHint();
+                this.closeSettings();
+                
+                this.alertManager.alert({
+                    title: '已保存',
+                    message: '设置已保存成功！',
+                    type: 'success'
+                });
+            }
+            
+            updateCustomSitesSection() {
+                this.renderCustomSitesGrid();
+            }
+            
+            async addCustomSite() {
+                const name = document.getElementById('customSiteName').value.trim();
+                const url = document.getElementById('customSiteUrl').value.trim();
+                const homepage = document.getElementById('customSiteHomepage').value.trim();
+                const icon = document.getElementById('customSiteIcon').value;
+                const color = document.getElementById('customSiteColor').value;
+                const category = document.getElementById('customSiteCategory').value;
+                const customCategoryName = document.getElementById('customCategoryInput').value.trim();
+                const description = document.getElementById('customSiteDesc').value.trim();
+                
+                if (!name || !url) {
+                    this.alertManager.alert({
+                        title: '输入错误',
+                        message: '请填写网站名称和搜索URL格式！',
+                        type: 'warning'
+                    });
+                    return;
+                }
+                
+                if (!url.includes('{keyword}')) {
+                    this.alertManager.alert({
+                        title: 'URL格式错误',
+                        message: '搜索URL格式必须包含 {keyword} 作为关键词占位符！',
+                        type: 'warning'
+                    });
+                    return;
+                }
+                
+                // 如果是自定义分类，需要分类名称
+                if (category === 'custom' && !customCategoryName) {
+                    this.alertManager.alert({
+                        title: '输入错误',
+                        message: '请填写自定义分类名称！',
+                        type: 'warning'
+                    });
+                    return;
+                }
+                
+                const newSite = {
+                    name,
+                    url,
+                    homepage: homepage || '',
+                    icon,
+                    color,
+                    description: description || `搜索${name}相关内容...`,
+                    category,
+                    customCategoryName: category === 'custom' ? customCategoryName : ''
+                };
+                
+                const { siteId, category: targetCategory } = this.settingsManager.addCustomSite(newSite);
+                this.settingsManager.saveSettings();
+                
+                // 清空表单
+                document.getElementById('customSiteName').value = '';
+                document.getElementById('customSiteUrl').value = '';
+                document.getElementById('customSiteHomepage').value = '';
+                document.getElementById('customSiteDesc').value = '';
+                document.getElementById('customCategoryInput').value = '';
+                document.getElementById('customCategoryInput').style.display = 'none';
+                
+                // 更新显示
+                this.renderCategoryTabs();
+                this.renderSearchGrid();
+                this.updateCustomSitesSection();
+                this.renderSitesGrid('all');
+                
+                this.alertManager.alert({
+                    title: '添加成功',
+                    message: `自定义网站"${name}"添加成功！`,
+                    type: 'success'
+                });
+            }
+            
+            async deleteCustomSite(siteId) {
+                const confirmed = await this.alertManager.confirm({
+                    title: '确认删除',
+                    message: '确定要删除这个自定义网站吗？此操作无法撤销。',
+                    type: 'warning'
+                });
+                
+                if (confirmed) {
+                    const { success, category } = this.settingsManager.removeCustomSite(siteId);
+                    if (success) {
+                        this.settingsManager.saveSettings();
+                        this.renderCategoryTabs();
+                        this.renderSearchGrid();
+                        this.updateCustomSitesSection();
+                        this.renderSitesGrid('all');
+                        
+                        this.alertManager.alert({
+                            title: '已删除',
+                            message: '自定义网站已删除！',
+                            type: 'success'
+                        });
+                    }
+                }
+            }
+            
+            exportSettings() {
+                const data = this.settingsManager.exportSettings();
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `搜索起始页设置_${new Date().toLocaleDateString()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.alertManager.alert({
+                    title: '导出成功',
+                    message: '设置已导出为JSON文件，请妥善保存！',
+                    type: 'success'
+                });
+            }
+            
+            triggerImport() {
+                document.getElementById('importFile').click();
+            }
+            
+            importSettings(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const success = this.settingsManager.importSettings(e.target.result);
+                    if (success) {
+                        this.alertManager.alert({
+                            title: '导入成功',
+                            message: '设置导入成功！',
+                            type: 'success'
+                        });
+                        
+                        this.renderCategoryTabs();
+                        this.renderSearchGrid();
+                        this.updateCustomSitesSection();
+                        this.renderSitesGrid('all');
+                        this.loadFeatureSwitches();
+                    } else {
+                        this.alertManager.alert({
+                            title: '导入失败',
+                            message: '导入失败，请检查文件格式是否正确！',
+                            type: 'error'
+                        });
+                    }
+                    event.target.value = '';
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // 初始化应用
+        const app = new SearchStartPage();
+        
+        // 暴露必要的方法给全局作用域
+        window.app = app;
+    </script>
+</body>
+</html>
