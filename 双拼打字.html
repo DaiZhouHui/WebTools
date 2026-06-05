@@ -187,9 +187,17 @@
     @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
     .stats-row { display: flex; gap: 10px; font-size: 0.7em; color: var(--text-light); font-weight: 400; }
 
+    .progress-bar-wrap {
+      background: #e9eef3; border-radius: 4px; height: 2px; overflow: hidden; margin-top: 4px;
+    }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #4a90d9, #6db3f2);
+      border-radius: 4px; transition: width 0.4s;
+    }
+
     .keyboard-container {
       background: #ffffff; border-radius: 16px;
-      padding: 8px 6px 8px 36px; /* 左边增加30px */
+      padding: 8px 6px 8px 36px;
       box-shadow: none; overflow-x: auto;
       border: 1px solid #ffffff;
     }
@@ -307,6 +315,9 @@
           <span>❌ <span id="errorCount">0</span></span>
           <span>🎯 <span id="accuracy">0%</span></span>
         </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
       </div>
     </div>
 
@@ -477,6 +488,7 @@
       const $stageSelector = $('stageSelector'), $stageLabel = $('stageLabel'), $wordGrid = $('wordGrid');
       const $inputDisplay = $('inputDisplay'), $correctCount = $('correctCount'), $errorCount = $('errorCount');
       const $accuracy = $('accuracy'), $speedValue = $('speedValue'), $timerValue = $('timerValue');
+      const $progressBar = $('progressBar');
       const $btnHint = $('btnHint'), $btnReset = $('btnReset'), $btnShuffle = $('btnShuffle');
       const $btnClearCustom = $('btnClearCustom'), $customWordInput = $('customWordInput'), $btnAddCustom = $('btnAddCustom');
       const $customList = $('customList'), $keyboardContainer = $('keyboardContainer'), $toast = $('toast');
@@ -548,43 +560,27 @@
 
         let svg = '<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg"><style>.kb-k{fill:#f7f9fb;stroke:#c5cdd5;stroke-width:1;rx:5}.kb-k.key-highlight{fill:#d6e6ff;stroke:#4a90d9;stroke-width:2.5}.kb-t{font-family:Roboto,sans-serif;font-size:9px;fill:#757575;text-anchor:middle;font-weight:400}.kb-tl{font-family:Roboto,sans-serif;font-size:20px;fill:#757575;text-anchor:start;font-weight:400}.kb-ty{font-family:Roboto,sans-serif;font-size:12px;fill:#757575;text-anchor:end;font-weight:400}.key-highlight .kb-tl,.key-highlight .kb-ty{fill:#ffffff}</style>';
 
-        // 先计算底部行总宽度以确定space的拉伸
-        const bottomRow = rows[4];
-        const bottomStandardKeys = bottomRow.filter(k => k !== 'space');
-        const standardKeyCount = bottomStandardKeys.length;
-        const standardKeyWidth = 44; // 基础宽度
-        const gap = 4;
-        // 固定其他键宽度为1倍
-        const otherKeysTotalWidth = standardKeyCount * (standardKeyWidth + gap) - gap;
-        const totalWidth = 720;
-        const xStart = 10;
-        const availableWidth = totalWidth - xStart * 2 - otherKeysTotalWidth - gap; // 左右边距
-        const spaceWidth = availableWidth;
-        // 转换为倍数w
-        const spaceW = (spaceWidth + gap) / (standardKeyWidth + gap); // 实际上 pw = 44*w + (w-1)*4 = w*48 -4
-
         let y = 10;
         rows.forEach((row, ri) => {
           let x = 10;
           const rh = ri === 4 ? 36 : 42;
           row.forEach((k, idx) => {
             let w = 1;
-            if (k === 'backspace') w = 1.6;   // 约75px
+            if (k === 'backspace') w = 1.6;
             else if (k === 'tab') w = 1.6;
             else if (k === 'capslock') w = 1.9;
-            else if (k === 'enter') w = 1.7;   // 约78px
-            else if (k === 'shift-left' || k === 'shift-right') w = (k === 'shift-right' ? 2.1 : 2.5); // shift-right 约97px
+            else if (k === 'enter') w = 1.7;
+            else if (k === 'shift-left' || k === 'shift-right') w = (k === 'shift-right' ? 2.1 : 2.5);
             else if (k === 'space') {
               if (ri === 4) {
-                // 计算space的宽度
-                const fixedWidthSoFar = bottomRow.slice(0, idx).reduce((sum, key) => {
+                const fixedWidthSoFar = row.slice(0, idx).reduce((sum, key) => {
                   if (key === 'space') return sum;
-                  const wKey = (key === 'ctrl' || key === 'win' || key === 'alt') ? 1 : 1;
+                  const wKey = 1;
                   return sum + (44 * wKey + (wKey - 1) * 4) + 4;
                 }, 0);
-                const remaining = totalWidth - xStart * 2 - fixedWidthSoFar - (bottomRow.slice(idx + 1).length * (44 + 4));
+                const remaining = 720 - 20 - fixedWidthSoFar - (row.slice(idx + 1).length * (44 + 4));
                 const spacePx = remaining;
-                w = (spacePx + 4) / 48; // 计算倍数
+                w = (spacePx + 4) / 48;
               } else {
                 w = 5.5;
               }
@@ -693,6 +689,8 @@
         if (w && w.sp.length > 0) highlightKey(w.sp[0]);
         $correctCount.textContent = state.correct; $errorCount.textContent = state.error; updateAccuracy();
         updateSpeed();
+        // 更新进度条
+        $progressBar.style.width = total ? `${(state.wordIdx / total) * 100}%` : '0%';
         renderStageSelector(); renderCustomList(); updateVocabSelect();
         $btnPrevStage.disabled = (state.stageIdx <= 0);
         $btnNextStage.disabled = (state.stageIdx >= STAGES.length - 1);
