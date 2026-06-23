@@ -806,14 +806,14 @@
       // =====================================================
 
       function playBase64Audio(base64) {
-        if (!base64) return;
+        if (!base64 || base64.startsWith('请在此处替换')) return; // 占位符时不播放
         try {
           const audio = new Audio('data:audio/mp3;base64,' + base64);
           audio.play().catch(() => { });
         } catch (e) { }
       }
 
-      // ========== 修复拼音映射（包含 ü） ==========
+      // ---------- 拼音映射（包含 ü 及其带声调变体） ----------
       const YUNMU_KEY_MAP = {
         'a': 'a', 'ai': 'd', 'an': 'j', 'ang': 'h', 'ao': 'c',
         'e': 'e', 'ei': 'w', 'en': 'f', 'eng': 'g', 'er': 'r',
@@ -853,6 +853,8 @@
       function pinyinToSp(py) {
         if (!py) return '';
         let p = py.trim().toLowerCase();
+        // 标准化带声调的 ü（ǖ, ǘ, ǚ, ǜ）
+        p = p.replace(/[ǖǘǚǜ]/g, 'ü');
         let s = '', y = p;
         if (p.startsWith('zh')) { s = 'v'; y = p.slice(2); }
         else if (p.startsWith('ch')) { s = 'i'; y = p.slice(2); }
@@ -936,7 +938,7 @@
         showHint: true, autoNext: true, customWords: [], completedStages: [],
         stageProgress: {}, wordErrorFlags: [],
         startTime: null, totalKeystrokes: 0,
-        showKeyboard: true  // 新增：键盘显隐状态，默认显示
+        showKeyboard: true
       };
 
       function loadState() {
@@ -990,7 +992,7 @@
       const $titleIcon = $('titleIcon'), $sidebarToggleFixed = $('sidebarToggleFixed');
       const $btnPrevStage = $('btnPrevStage'), $btnNextStage = $('btnNextStage');
       const $btnSettings = $('btnSettings');
-      const $btnKeyboardToggle = $('btnKeyboardToggle');  // 新增键盘切换按钮
+      const $btnKeyboardToggle = $('btnKeyboardToggle');
       const $topHeader = $('topHeader');
 
       let inputBuffer = '', toastTimer;
@@ -1022,7 +1024,6 @@
       function clearHighlight() { if (highlightEl) { highlightEl.classList.remove('key-highlight'); highlightEl = null; } }
       function keyId(c) { c = c.toLowerCase(); if (c === ' ') return 'space'; if (c === ',') return 'comma'; if (c === '.') return 'dot'; if (c === '/') return 'slash'; if (c === ';') return 'semicolon'; if (c === "'") return 'quote'; if (c >= 'a' && c <= 'z') return c; return c; }
 
-      // 渲染键盘（始终显示韵母标签，不受显隐影响）
       function renderKeyboard() {
         const yunmuLabels = {
           'q': 'iu', 'w': 'ei', 'e': 'e', 'r': 'uan', 't': 'ue/ve', 'y': 'un', 'u': 'u/sh', 'i': 'i/ch', 'o': 'uo/o', 'p': 'ie',
@@ -1102,7 +1103,6 @@
         });
         svg += '</svg>';
         $keyboardContainer.innerHTML = svg;
-        // 根据状态控制显隐
         $keyboardContainer.style.display = state.showKeyboard ? '' : 'none';
         updateKeyboardToggleBtn();
       }
@@ -1200,7 +1200,6 @@
         $btnPrevStage.disabled = (state.stageIdx <= 0);
         $btnNextStage.disabled = (state.stageIdx >= STAGES.length - 1);
         updateTopHeaderPadding();
-        // 确保键盘显隐状态正确
         $keyboardContainer.style.display = state.showKeyboard ? '' : 'none';
         updateKeyboardToggleBtn();
 
