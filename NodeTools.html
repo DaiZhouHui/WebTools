@@ -617,6 +617,7 @@ https://192.168.1.6:8443
                         </label>
                         <select id="outputColumns">
                             <option value="ip,port">IP, 端口 (两列)</option>
+                            <option value="ip,port,country,region,city">IP, 端口, 国家, 地区, 城市 (五列)</option>
                             <option value="ip,port,protocol">IP, 端口, 协议 (三列)</option>
                             <option value="url,ip,port">URL, IP, 端口 (三列)</option>
                         </select>
@@ -1299,7 +1300,7 @@ https://192.168.1.6:8443
             showResult(extractedData, `成功从输入中解析到 ${extractedData.length} 个有效的IP和端口组合`);
         }
 
-        // 新增：解析手动输入 - 增强版，支持单行多组合
+        // 新增：解析手动输入 - 增强版，支持单行多组合和vless链接别名解析
         function parseManualInput(text) {
             const results = [];
 
@@ -1308,6 +1309,9 @@ https://192.168.1.6:8443
 
             // 协议检测正则
             const protocolPattern = /^(https?):\/\//i;
+            
+            // vless链接正则表达式
+            const vlessPattern = /^vless:\/\/([^@]+)@([^:]+):(\d+)\?[^#]*#(.+)$/i;
 
             // 用于提取IP和端口的正则表达式
             const ipPortPatterns = [
@@ -1324,6 +1328,31 @@ https://192.168.1.6:8443
             for (let line of lines) {
                 line = line.trim();
                 if (!line || line.startsWith('#')) continue; // 跳过空行和注释
+
+                // 检查是否为vless链接
+                const vlessMatch = line.match(vlessPattern);
+                if (vlessMatch) {
+                    // 解析vless链接
+                    const ip = vlessMatch[2];
+                    const port = vlessMatch[3];
+                    const alias = decodeURIComponent(vlessMatch[4]);
+                    
+                    // 从别名中提取地理位置信息
+                    const locationInfo = extractLocationFromAlias(alias);
+                    
+                    results.push({
+                        ip: ip,
+                        port: port,
+                        protocol: 'vless',
+                        original: line,
+                        url: line,
+                        country: locationInfo.country,
+                        region: locationInfo.region,
+                        city: locationInfo.city,
+                        alias: alias
+                    });
+                    continue;
+                }
 
                 // 检查整行是否有常见分隔符（逗号、分号、空格、竖线）
                 // 如果有，先按这些分隔符分割
@@ -1411,13 +1440,84 @@ https://192.168.1.6:8443
                             port: port,
                             protocol: protocol,
                             original: original,
-                            url: protocol === 'tcp' ? `http://${ip}:${port}` : `${protocol}://${ip}:${port}`
+                            url: protocol === 'tcp' ? `http://${ip}:${port}` : `${protocol}://${ip}:${port}`,
+                            country: '',
+                            region: '',
+                            city: ''
                         });
                     }
                 }
             }
 
             return results;
+        }
+
+        // 新增：从别名中提取地理位置信息
+        function extractLocationFromAlias(alias) {
+            let country = '';
+            let region = '';
+            let city = '';
+
+            if (!alias) return { country, region, city };
+
+            // 常见的国家/地区名称列表（中文）
+            const countries = [
+                '日本', '韩国', '新加坡', '美国', '英国', '德国', '法国', '加拿大', 
+                '澳大利亚', '俄罗斯', '印度', '巴西', '墨西哥', '意大利', '西班牙',
+                '荷兰', '瑞士', '瑞典', '挪威', '丹麦', '芬兰', '波兰', '土耳其',
+                '泰国', '越南', '马来西亚', '印度尼西亚', '菲律宾', '台湾', '香港',
+                '澳门', '中国', '南非', '埃及', '阿联酋', '沙特', '以色列', '伊朗',
+                '巴基斯坦', '孟加拉国', '缅甸', '柬埔寨', '老挝', '尼泊尔', '斯里兰卡'
+            ];
+
+            // 常见的城市名称列表（中文）
+            const cities = [
+                '东京', '大阪', '首尔', '釜山', '新加坡', '纽约', '洛杉矶', '旧金山',
+                '芝加哥', '伦敦', '巴黎', '柏林', '法兰克福', '阿姆斯特丹', '苏黎世',
+                '斯德哥尔摩', '奥斯陆', '哥本哈根', '赫尔辛基', '华沙', '伊斯坦布尔',
+                '曼谷', '河内', '胡志明市', '吉隆坡', '雅加达', '马尼拉', '台北',
+                '香港', '澳门', '北京', '上海', '广州', '深圳', '成都', '杭州',
+                '约翰内斯堡', '开罗', '迪拜', '利雅得', '特拉维夫', '德黑兰',
+                '卡拉奇', '达卡', '仰光', '金边', '万象', '加德满都', '科伦坡'
+            ];
+
+            // 尝试从别名中提取国家
+            for (const countryName of countries) {
+                if (alias.includes(countryName)) {
+                    country = countryName;
+                    break;
+                }
+            }
+
+            // 尝试从别名中提取城市
+            for (const cityName of cities) {
+                if (alias.includes(cityName)) {
+                    city = cityName;
+                    break;
+                }
+            }
+
+            // 如果没有找到城市，尝试从别名开头提取（通常在开头）
+            if (!city) {
+                // 匹配别名开头的中文字符
+                const cityMatch = alias.match(/^([\u4e00-\u9fa5]+)/);
+                if (cityMatch && cityMatch[1]) {
+                    const potentialCity = cityMatch[1];
+                    // 检查是否是国家名，如果不是则作为城市
+                    if (!countries.includes(potentialCity)) {
+                        city = potentialCity;
+                    }
+                }
+            }
+
+            // 设置地区（如果没有单独的地区信息，使用国家或城市）
+            if (country) {
+                region = country;
+            } else if (city) {
+                region = city;
+            }
+
+            return { country, region, city };
         }
 
         // 显示结果
@@ -1505,6 +1605,9 @@ https://192.168.1.6:8443
                     if (col === 'url') return item.url;
                     if (col === 'original') return `"${item.original}"`;
                     if (col === 'source') return item.fileName || item.source || '';
+                    if (col === 'country') return item.country || '';
+                    if (col === 'region') return item.region || '';
+                    if (col === 'city') return item.city || '';
                     return '';
                 });
                 csvContent += row.join(',') + '\n';
@@ -1523,6 +1626,9 @@ https://192.168.1.6:8443
                 if (col === 'url') displayName = 'URL';
                 if (col === 'original') displayName = '原始输入';
                 if (col === 'source') displayName = '来源文件';
+                if (col === 'country') displayName = '国家';
+                if (col === 'region') displayName = '地区';
+                if (col === 'city') displayName = '城市';
                 tableHtml += `<th>${displayName}</th>`;
             });
             tableHtml += '</tr></thead>';
@@ -1539,6 +1645,9 @@ https://192.168.1.6:8443
                     if (col === 'url') value = item.url;
                     if (col === 'original') value = item.original;
                     if (col === 'source') value = item.fileName || item.source || '';
+                    if (col === 'country') value = item.country || '';
+                    if (col === 'region') value = item.region || '';
+                    if (col === 'city') value = item.city || '';
                     
                     // 如果是来源列且当前模式是CSV提取，添加特殊样式
                     if (col === 'source' && item.fileName) {
@@ -1604,6 +1713,9 @@ https://192.168.1.6:8443
                         if (col === 'protocol') return item.protocol;
                         if (col === 'url') return item.url;
                         if (col === 'original') return `"${item.original}"`;
+                        if (col === 'country') return item.country || '';
+                        if (col === 'region') return item.region || '';
+                        if (col === 'city') return item.city || '';
                         return '';
                     });
                     csvContent += row.join(',') + '\n';
